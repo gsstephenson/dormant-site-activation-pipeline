@@ -35,3 +35,6 @@ __pycache__/
 !data/gnomad/.gitkeep
 !data/motifs/JASPAR/.gitkeep
 !data/motifs/consensus/.gitkeep
+
+# LaTeX compilation logs
+*.log
