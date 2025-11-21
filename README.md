@@ -18,7 +18,7 @@ Which weak/near-motif sequences could become functional transcription factor bin
 
 ---
 
-## 📋 Quick Start
+##  Quick Start
 
 ### 1. Setup Environment
 
