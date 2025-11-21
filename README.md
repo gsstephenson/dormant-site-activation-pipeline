@@ -146,25 +146,26 @@ Enumerate minimal mutation paths to consensus motif.
 ### Module 03: gnomAD Intersection [Complete]
 Query population variants that match activating mutations.
 
-**Status:** Complete (with partial coverage)  
+**Status:** ✅ Complete (ALL 24 chromosomes)  
 **Documentation:** `03_intersect_gnomad/DOCUMENTATION.md`
 
 **Key outputs:**
-- 326,311 gnomAD variants matched across 14 chromosomes
-- 15,767 mutation steps matched to population data (0.1% of total)
-- Allele frequency summary per mutation path
+- 867,406 gnomAD variants retrieved (ALL 24 chromosomes)
+- 38,961 mutation steps matched to population data (0.21% of total)
+- Allele frequency distribution: 39.6% rare, 44.7% low, 9.3% moderate, 6.3% common
 
 **Coverage:**
-- ✅ Successfully queried: chr9, chr11, chr13-22, chrX, chrY (14/24 chromosomes)
-- ⚠️ Timed out (>2 hours): chr1-8, chr10, chr12 (10 largest chromosomes)
-- Note: Large chromosomes require 3-6+ hours each or chunked queries
+- ✅ Successfully queried: ALL chromosomes (chr1-22, X, Y) - 100% success
+- Extended timeout: 6 hours per chromosome (was 2 hours)
+- Increased parallelism: 30 jobs (was 24)
+- Runtime: ~3 hours 13 minutes on 32-core system
 
 **Usage:**
 ```bash
-python 03_intersect_gnomad/query_parallel.py --config pipeline_config.yaml
+python 03_intersect_gnomad/query_gnomad_vcfs.py --config pipeline_config.yaml
 ```
 
-**Known limitation:** Very large chromosomes (chr1-8) timeout after 2 hours when querying 3.2M positions. For complete coverage, these would need to be split into 50-100 Mb chunks and queried separately (estimated 30-60+ hours total for all 10 failed chromosomes). Current partial coverage (14 chromosomes) is sufficient for initial analysis.
+**Improvement:** 2.66x more variants than partial run (867K vs 326K). Complete chromosome coverage achieved by extending timeout and optimizing parallelization.
 
 ---
 
@@ -188,10 +189,12 @@ export ALPHA_GENOME_KEY="your_api_key"
 ```
 
 **Current dataset:**
-- 15,221 mutation steps matched to gnomAD
-- 2,701 unique genomic variants (deduplicated)
-- From 14 chromosomes (chr9, 11, 13-22, X, Y)
-- ⚠️ Missing chr1-8, 10, 12 (timed out in Module 03)
+- 38,961 mutation steps matched to gnomAD (ALL chromosomes)
+- 6,921 unique genomic variants (deduplicated)
+- Coverage: ALL 24 chromosomes ✅
+- Complete genome-wide analysis
+
+**Deduplication rationale:** Same genomic variant (chr:pos:ref>alt) can appear in multiple mutation paths. Since AlphaGenome scores genomic positions (not paths), deduplication avoids redundant API calls while preserving all information.
 
 **Test setup:**
 ```bash
@@ -206,9 +209,9 @@ python 04_run_alphagenome/prepare_unique_variants.py
 # Step 2: Test on small batch
 python 04_run_alphagenome/run_alphagenome_scoring.py \
     --config pipeline_config.yaml \
-    --limit 50
+    --limit 2
 
-# Step 3: Full run (2,701 unique variants, ~33 minutes)
+# Step 3: Full run (6,921 unique variants, ~84 minutes)
 python 04_run_alphagenome/run_alphagenome_scoring.py \
     --config pipeline_config.yaml
 ```
@@ -216,10 +219,9 @@ python 04_run_alphagenome/run_alphagenome_scoring.py \
 **Expected outputs:**
 - `results/alphagenome/AP1/predictions.parquet` - Raw scores (variant-track pairs)
 - `results/alphagenome/AP1/predictions_summary.tsv` - Mean scores per variant
+- Output size: ~7.7M variant-track predictions (6,921 variants × 1,116 tracks)
 
-**Performance:** ~1.37 variants/sec, 2,701 variants ≈ 33 minutes
-
-**Note:** To score variants on large chromosomes (chr1-8, 10, 12), re-run Module 03 with chunked queries (50-100 Mb chunks). This would add ~12,000 more variants but require 30-60 hours for gnomAD queries.
+**Performance:** ~1.37 variants/sec, 6,921 variants ≈ 84 minutes (~1.4 hours)
 
 ---
 
