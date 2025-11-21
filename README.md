@@ -56,10 +56,14 @@ python 00_fetch_data/download_gnomad_index_info.py \
 python 01_scan_motifs/scan_genome_fimo.py --config pipeline_config.yaml
 python 01_scan_motifs/tier_sites.py --config pipeline_config.yaml
 
-# Module 02: Generate mutation paths (coming next)
-# python 02_generate_mutation_paths/enumerate_paths.py --config pipeline_config.yaml
+# Module 02: Generate mutation paths
+python 02_generate_mutation_paths/enumerate_paths.py --config pipeline_config.yaml
 
-# ... (additional modules to be implemented)
+# Module 03: Query gnomAD (WARNING: large chromosomes may timeout)
+python 03_intersect_gnomad/query_parallel.py --config pipeline_config.yaml
+
+# Module 04: AlphaGenome scoring (next)
+python 04_run_alphagenome/make_variant_seqs.py --config pipeline_config.yaml
 ```
 
 ---
@@ -139,13 +143,83 @@ Enumerate minimal mutation paths to consensus motif.
 
 ---
 
-### Module 03: gnomAD Intersection [In Progress]
+### Module 03: gnomAD Intersection [Complete]
 Query population variants that match activating mutations.
+
+**Status:** Complete (with partial coverage)  
+**Documentation:** `03_intersect_gnomad/DOCUMENTATION.md`
+
+**Key outputs:**
+- 326,311 gnomAD variants matched across 14 chromosomes
+- 15,767 mutation steps matched to population data (0.1% of total)
+- Allele frequency summary per mutation path
+
+**Coverage:**
+- ✅ Successfully queried: chr9, chr11, chr13-22, chrX, chrY (14/24 chromosomes)
+- ⚠️ Timed out (>2 hours): chr1-8, chr10, chr12 (10 largest chromosomes)
+- Note: Large chromosomes require 3-6+ hours each or chunked queries
+
+**Usage:**
+```bash
+python 03_intersect_gnomad/query_parallel.py --config pipeline_config.yaml
+```
+
+**Known limitation:** Very large chromosomes (chr1-8) timeout after 2 hours when querying 3.2M positions. For complete coverage, these would need to be split into 50-100 Mb chunks and queried separately (estimated 30-60+ hours total for all 10 failed chromosomes). Current partial coverage (14 chromosomes) is sufficient for initial analysis.
 
 ---
 
-### Module 04: AlphaGenome Scoring [Planned]
-Predict functional impact of activating variants.
+### Module 04: AlphaGenome Scoring [Ready]
+**Score functional impact of activating mutations using AlphaGenome with 1MB context windows.**
+
+**Status:** ✅ Implementation complete - ready to run
+
+**Implementation:** Follows proven methodology from `alphagenome-qtl-validation` repository
+- Uses `dna_client.SEQUENCE_LENGTH_1MB` (1,048,576 bp) context windows
+- Direct API usage via `client.score_variant()` 
+- CHIP_HISTONE scorer for TF binding and chromatin accessibility
+- Validated approach: r=0.40 correlation with GTEx caQTLs
+
+**Documentation:** `04_run_alphagenome/README.md`
+
+**Prerequisites:**
+```bash
+conda activate alphagenome-env
+export ALPHA_GENOME_KEY="your_api_key"
+```
+
+**Current dataset:**
+- 15,221 mutation steps matched to gnomAD
+- 2,701 unique genomic variants (deduplicated)
+- From 14 chromosomes (chr9, 11, 13-22, X, Y)
+- ⚠️ Missing chr1-8, 10, 12 (timed out in Module 03)
+
+**Test setup:**
+```bash
+python 04_run_alphagenome/test_alphagenome_setup.py
+```
+
+**Usage:**
+```bash
+# Step 1: Prepare unique variants (deduplicates mutation paths)
+python 04_run_alphagenome/prepare_unique_variants.py
+
+# Step 2: Test on small batch
+python 04_run_alphagenome/run_alphagenome_scoring.py \
+    --config pipeline_config.yaml \
+    --limit 50
+
+# Step 3: Full run (2,701 unique variants, ~33 minutes)
+python 04_run_alphagenome/run_alphagenome_scoring.py \
+    --config pipeline_config.yaml
+```
+
+**Expected outputs:**
+- `results/alphagenome/AP1/predictions.parquet` - Raw scores (variant-track pairs)
+- `results/alphagenome/AP1/predictions_summary.tsv` - Mean scores per variant
+
+**Performance:** ~1.37 variants/sec, 2,701 variants ≈ 33 minutes
+
+**Note:** To score variants on large chromosomes (chr1-8, 10, 12), re-run Module 03 with chunked queries (50-100 Mb chunks). This would add ~12,000 more variants but require 30-60 hours for gnomAD queries.
 
 ---
 
@@ -279,5 +353,7 @@ CU Boulder LAYER Lab
 
 ## Version
 
-**Current Status:** Module 01 Complete  
-**Next:** Module 02 - Mutation Path Enumeration
+**Current Status:** Module 03 Complete (partial gnomAD coverage)  
+**Next:** Module 04 - AlphaGenome Functional Scoring
+
+**Latest Update:** Module 03 completed with 326K variants from 14 chromosomes. Large chromosomes (chr1-8, chr10, chr12) timed out and would require chunked queries for complete coverage.

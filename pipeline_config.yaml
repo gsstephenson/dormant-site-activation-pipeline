@@ -19,14 +19,15 @@ gnomad:
 
 # AlphaGenome Configuration
 alphagenome:
-  model_path: "/mnt/models/alphagenome/"
-  context_bp: 1000  # ±1kb window around motif
-  batch_size: 100   # sequences per batch
-  tracks:
-    - "ATAC"
-    - "H3K27ac"
-    - "H3K4me3"
-    - "TF_binding"
+  # API key should be set via ALPHAGENOME_API_KEY environment variable
+  # or passed via --api-key flag
+  
+  # Context window: AlphaGenome uses fixed 1MB windows (1,048,576 bp)
+  # This is defined by dna_client.SEQUENCE_LENGTH_1MB
+  # No need to configure - handled automatically by API
+  
+  # Scorers: Using CHIP_HISTONE for TF binding and chromatin accessibility
+  # This includes tracks for ATAC, H3K27ac, H3K4me3, and TF ChIP-seq
 
 # Motif Scanning Parameters
 motif_scan:

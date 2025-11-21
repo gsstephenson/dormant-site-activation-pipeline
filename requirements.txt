@@ -8,6 +8,10 @@ scipy>=1.10.0
 # Bioinformatics
 biopython>=1.81
 
+# AlphaGenome (installed separately - not on PyPI)
+# Installation: Follow alphagenome-qtl-validation setup instructions
+# Requires API key from AlphaGenome
+
 # Configuration and I/O
 pyyaml>=6.0
 
