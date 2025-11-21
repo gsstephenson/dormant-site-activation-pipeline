@@ -1,0 +1,93 @@
+{
+  "matrix_id": "MA0099.3",
+  "name": "FOS::JUN",
+  "base_id": "MA0099",
+  "version": 3,
+  "collection": "CORE",
+  "sequence_logo": "https://jaspar.elixir.no/static/logos/svg/MA0099.3.svg",
+  "versions_url": "https://jaspar.elixir.no/api/v1/matrix/MA0099/versions",
+  "sites_url": null,
+  "pfm": {
+    "A": [
+      592.0,
+      3.0,
+      7.0,
+      820.0,
+      78.0,
+      5.0,
+      30.0,
+      992.0,
+      24.0,
+      277.0
+    ],
+    "C": [
+      111.0,
+      5.0,
+      1.0,
+      131.0,
+      180.0,
+      2.0,
+      963.0,
+      2.0,
+      313.0,
+      397.0
+    ],
+    "G": [
+      257.0,
+      2.0,
+      824.0,
+      4.0,
+      688.0,
+      2.0,
+      3.0,
+      2.0,
+      95.0,
+      164.0
+    ],
+    "T": [
+      40.0,
+      990.0,
+      168.0,
+      45.0,
+      54.0,
+      991.0,
+      4.0,
+      4.0,
+      568.0,
+      162.0
+    ]
+  },
+  "class": [
+    "Basic leucine zipper factors (bZIP)"
+  ],
+  "family": [
+    "Fos-related",
+    "Jun-related"
+  ],
+  "tfe_id": [],
+  "medline": [
+    "11988758"
+  ],
+  "pazar_tf_id": [],
+  "comment": "TF has several motif variants.",
+  "remap_tf_name": "JUN",
+  "source": "28092692",
+  "tax_group": "vertebrates",
+  "type": "SMiLE-seq",
+  "tfe_ids": [],
+  "pubmed_ids": [
+    "11988758"
+  ],
+  "pazar_tf_ids": [],
+  "uniprot_ids": [
+    "P01100",
+    "P05412"
+  ],
+  "species": [
+    {
+      "tax_id": 9606,
+      "name": "Homo sapiens"
+    }
+  ],
+  "tffm": null
+}

@@ -1,0 +1,7 @@
+motif_id: MA0099.3
+tf_name: FOS::JUN
+class:
+- Basic leucine zipper factors (bZIP)
+species: Homo sapiens
+pfm_file: /mnt/work_1/gest9386/CU_Boulder/rotations/LAYER/dormant_site_activation_pipeline/data/motifs/JASPAR/MA0099.3.meme
+length: 10

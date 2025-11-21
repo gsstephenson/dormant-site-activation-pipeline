@@ -1,11 +1,11 @@
-🌋 directive.md – Dormant Site Activation Pipeline (Full Specification)
+Dormant Site Activation Pipeline (Full Specification)
 
 Author: George Stephenson
 Project: TF Activation Landscape (AP1 prototype, generalizable to all TFs)
 Purpose: Build a fully automated, reproducible pipeline that quantifies how “dormant” motif instances across the human genome could become activated TF binding sites through human-standing variation and predicted molecular consequences (AlphaGenome).
 Primary Data Sources: gnomAD v4.1 (GRCh38), JASPAR/HOCOMOCO motifs, GRCh38 genome, AlphaGenome model.
 
-1. 📌 Overall Objective
+1. Overall Objective
 
 Implement a generalizable computational pipeline that:
 
@@ -33,7 +33,7 @@ Produces publication-ready visualizations and summary reports.
 
 This pipeline must run on ODYSSEUS or any HPC, be modular, and support batch-mode for large models like AlphaGenome.
 
-2. 📁 Directory Structure (Copilot: Create These Exactly)
+2. Directory Structure (Copilot: Create These Exactly)
 alphamotif-activation-pipeline/
 │
 ├── directive.md                      # THIS FILE
@@ -89,7 +89,7 @@ alphamotif-activation-pipeline/
     ├── constants.py
     └── DOCUMENTATION.md
 
-3. 🌍 Data Requirements (Copilot: Ensure these download commands are used)
+3. Data Requirements (Copilot: Ensure these download commands are used)
 
 All gnomAD data must reside at:
 
@@ -149,7 +149,7 @@ Place PFMs in:
 
 data/motifs/JASPAR/
 
-4. 🧬 Pipeline Modules (HIGH-LEVEL SPECIFICATION FOR COPILOT)
+4. Pipeline Modules (HIGH-LEVEL SPECIFICATION FOR COPILOT)
 Module 01 – Genome-Wide Motif Scan
 
 Input:
@@ -275,7 +275,7 @@ Output:
 
 figures/{TF}/activation_landscape.png
 
-5. 🎯 Pipeline Configuration Template (pipeline_config.yaml)
+5. Pipeline Configuration Template (pipeline_config.yaml)
 
 Copilot must generate:
 
@@ -301,7 +301,7 @@ motif_scan:
     tier1: 0.85
     tier2: 0.70
 
-6. ⚡ Copilot Implementation Directives
+6. Copilot Implementation Directives
 
 Copilot must:
 
@@ -328,7 +328,7 @@ AlphaGenome sequencing I/O
 
 All intermediate outputs must be stored under results/.
 
-7. ✔ Success Criteria
+7. Success Criteria
 
 Pipeline must:
 

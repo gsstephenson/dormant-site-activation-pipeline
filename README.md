@@ -2,7 +2,7 @@
 
 **A computational framework for identifying cryptic transcription factor binding sites that could be activated by naturally occurring genetic variation.**
 
-## 🎯 Overview
+## Overview
 
 This pipeline quantifies how "dormant" motif instances across the human genome could become activated TF binding sites through human standing variation, using gnomAD population data and AlphaGenome functional predictions.
 
@@ -64,7 +64,7 @@ python 01_scan_motifs/tier_sites.py --config pipeline_config.yaml
 
 ---
 
-## 📁 Directory Structure
+## Directory Structure
 
 ```
 dormant_site_activation_pipeline/
@@ -79,7 +79,7 @@ dormant_site_activation_pipeline/
 │   └── gnomad/                 # Symlink to population variants
 │
 ├── 00_fetch_data/              # Data acquisition
-├── 01_scan_motifs/             # ✅ Genome-wide motif scanning
+├── 01_scan_motifs/             # Genome-wide motif scanning
 ├── 02_generate_mutation_paths/ # Enumerate activating mutations
 ├── 03_intersect_gnomad/        # Query population variants
 ├── 04_run_alphagenome/         # Functional predictions
@@ -105,9 +105,9 @@ dormant_site_activation_pipeline/
 
 ---
 
-## 🧬 Pipeline Modules
+## Pipeline Modules
 
-### ✅ Module 00: Data Fetching
+### Module 00: Data Fetching [Complete]
 Download reference genome, motifs, and verify gnomAD installation.
 
 **Status:** Complete  
@@ -115,7 +115,7 @@ Download reference genome, motifs, and verify gnomAD installation.
 
 ---
 
-### ✅ Module 01: Motif Scanning
+### Module 01: Motif Scanning [Complete]
 Genome-wide scanning for TF binding motifs with tiering by strength.
 
 **Status:** Complete  
@@ -134,32 +134,32 @@ python 01_scan_motifs/tier_sites.py --config pipeline_config.yaml
 
 ---
 
-### 🚧 Module 02: Mutation Paths
-*Coming next - Enumerate minimal mutation paths to consensus motif*
+### Module 02: Mutation Paths [Complete]
+Enumerate minimal mutation paths to consensus motif.
 
 ---
 
-### 🚧 Module 03: gnomAD Intersection
-*Query population variants that match activating mutations*
+### Module 03: gnomAD Intersection [In Progress]
+Query population variants that match activating mutations.
 
 ---
 
-### 🚧 Module 04: AlphaGenome Scoring
-*Predict functional impact of activating variants*
+### Module 04: AlphaGenome Scoring [Planned]
+Predict functional impact of activating variants.
 
 ---
 
-### 🚧 Module 05: Activation Landscape
-*Compute 2D landscape coordinates*
+### Module 05: Activation Landscape [Planned]
+Compute 2D landscape coordinates.
 
 ---
 
-### 🚧 Module 06: Visualization
-*Generate plots and ranked candidate lists*
+### Module 06: Visualization [Planned]
+Generate plots and ranked candidate lists.
 
 ---
 
-## ⚙️ Configuration
+## Configuration
 
 Edit `pipeline_config.yaml` to customize:
 
@@ -189,7 +189,7 @@ alphagenome:
 
 ---
 
-## 📊 Expected Outputs
+## Expected Outputs
 
 ### Activation Landscape
 A 2D plot showing:
@@ -206,7 +206,7 @@ List of dormant sites with:
 
 ---
 
-## 🔬 Use Cases
+## Use Cases
 
 ### 1. AP1 Prototype (Default)
 Identify dormant AP1 binding sites across the genome.
@@ -231,7 +231,7 @@ Examine:
 
 ---
 
-## 📖 Documentation
+## Documentation
 
 Each module has detailed documentation:
 - `00_fetch_data/DOCUMENTATION.md` - Data acquisition
@@ -240,7 +240,7 @@ Each module has detailed documentation:
 
 ---
 
-## 🐛 Troubleshooting
+## Troubleshooting
 
 ### FIMO not found
 ```bash
@@ -259,7 +259,7 @@ python 00_fetch_data/download_gnomad_index_info.py --show-download-instructions
 
 ---
 
-## 📝 Citation
+## Citation
 
 If you use this pipeline, please cite:
 - gnomAD: [Karczewski et al., 2020](https://doi.org/10.1038/s41586-020-2308-7)
@@ -269,7 +269,7 @@ If you use this pipeline, please cite:
 
 ---
 
-## 👤 Author
+## Author
 
 **George Stephenson**  
 TF Activation Landscape Project  
@@ -277,7 +277,7 @@ CU Boulder LAYER Lab
 
 ---
 
-## 🔄 Version
+## Version
 
 **Current Status:** Module 01 Complete  
 **Next:** Module 02 - Mutation Path Enumeration
