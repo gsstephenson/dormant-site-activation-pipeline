@@ -23,14 +23,14 @@ from utils.io import load_config
 from utils.logging_utils import setup_logger, log_step, log_parameters, ProgressLogger
 
 
-def query_single_chromosome(chrom, vcf_dir, vcf_pattern, bed_df, threads_per_job=2):
+def query_single_chromosome(chrom, vcf_dir, vcf_pattern, bed_df, threads_per_job=4):
     """
     Query a single chromosome (parallelizable function).
     
     OPTIMIZED:
     - Uses bcftools --threads for decompression parallelism
     - Efficient BED file handling
-    - Robust error handling with timeouts
+    - Robust error handling with 6-hour timeout
     
     Parameters
     ----------
@@ -43,7 +43,7 @@ def query_single_chromosome(chrom, vcf_dir, vcf_pattern, bed_df, threads_per_job
     bed_df : pd.DataFrame
         BED data for all chromosomes
     threads_per_job : int
-        Threads for bcftools decompression
+        Threads for bcftools decompression (default: 4)
         
     Returns
     -------
@@ -70,7 +70,7 @@ def query_single_chromosome(chrom, vcf_dir, vcf_pattern, bed_df, threads_per_job
         
         try:
             # bcftools query command
-            # Note: bcftools query doesn't support --threads, but parallel chromosome processing provides speedup
+            # Note: Parallel processing at chromosome level provides speedup
             cmd = [
                 'bcftools', 'query',
                 '-R', tmp_bed_path,
@@ -78,14 +78,14 @@ def query_single_chromosome(chrom, vcf_dir, vcf_pattern, bed_df, threads_per_job
                 str(vcf_file)
             ]
             
-            # Run bcftools with generous timeout
+            # Run bcftools with 6-hour timeout for large chromosomes
             result = subprocess.run(
                 cmd,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 text=True,
                 check=True,
-                timeout=7200  # 2 hour timeout per chromosome (large ones may take time)
+                timeout=21600  # 6 hour timeout per chromosome
             )
             
             num_variants = result.stdout.count('\n') if result.stdout else 0
@@ -95,7 +95,7 @@ def query_single_chromosome(chrom, vcf_dir, vcf_pattern, bed_df, threads_per_job
             error_msg = e.stderr[:500] if e.stderr else str(e)  # Truncate long errors
             return (chrom, "", 0, f"bcftools failed: {error_msg}")
         except subprocess.TimeoutExpired:
-            return (chrom, "", 0, "Query timed out (>2 hours)")
+            return (chrom, "", 0, "Query timed out (>6 hours)")
         finally:
             # Clean up temp file
             Path(tmp_bed_path).unlink(missing_ok=True)
@@ -146,7 +146,7 @@ def query_gnomad_parallel(
     """
     if n_jobs is None:
         # Use most cores for parallel chromosome processing
-        n_jobs = min(24, max(1, mp.cpu_count() - 2))
+        n_jobs = min(30, max(1, mp.cpu_count() - 2))
     
     logger.info("=" * 80)
     logger.info("PARALLEL gnomAD QUERY - FULLY OPTIMIZED")
@@ -155,6 +155,7 @@ def query_gnomad_parallel(
     logger.info(f"  BED: {bed_file}")
     logger.info(f"  Parallel chromosome jobs: {n_jobs}")
     logger.info(f"  Total CPU utilization: ~{n_jobs} cores")
+    logger.info(f"  Timeout per chromosome: 6 hours")
     
     # Read BED to determine which chromosomes we need
     logger.info("\n  Loading BED file...")
@@ -192,7 +193,7 @@ def query_gnomad_parallel(
     # Estimate runtime
     avg_positions_per_chrom = len(bed_df) / len(chromosomes)
     logger.info(f"  Avg positions per chromosome: {avg_positions_per_chrom:,.0f}")
-    logger.info(f"\n  Estimated runtime: 15-45 minutes (depending on VCF sizes)")
+    logger.info(f"\n  Estimated runtime: 1-3 hours (large chromosomes may take longer)")
     logger.info("=" * 80)
     
     # Prepare output file with header
@@ -207,9 +208,9 @@ def query_gnomad_parallel(
     logger.info("\n  Starting parallel queries...")
     
     with ProcessPoolExecutor(max_workers=n_jobs) as executor:
-        # Submit all chromosome queries
+        # Submit all chromosome queries in parallel
         future_to_chrom = {
-            executor.submit(query_single_chromosome, chrom, vcf_dir, vcf_pattern, bed_df, 1): chrom
+            executor.submit(query_single_chromosome, chrom, vcf_dir, vcf_pattern, bed_df): chrom
             for chrom in chromosomes
         }
         
