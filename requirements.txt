@@ -1,0 +1,39 @@
+# Dormant Site Activation Pipeline - Python Dependencies
+
+# Core scientific computing
+numpy>=1.24.0
+pandas>=2.0.0
+scipy>=1.10.0
+
+# Bioinformatics
+biopython>=1.81
+
+# Configuration and I/O
+pyyaml>=6.0
+
+# HTTP requests (for downloading motifs)
+requests>=2.31.0
+
+# Plotting and visualization
+matplotlib>=3.7.0
+seaborn>=0.12.0
+plotly>=5.14.0
+
+# Progress bars (optional but nice)
+tqdm>=4.65.0
+
+# For working with genomic intervals
+pybedtools>=0.9.0
+
+# Note: System dependencies required:
+# - MEME Suite (for FIMO)
+# - samtools
+# - bcftools  
+# - tabix
+# - gsutil (Google Cloud SDK, for downloading gnomAD)
+#
+# Install with conda:
+#   conda install -c bioconda meme samtools bcftools tabix
+#
+# Install gsutil:
+#   See: https://cloud.google.com/storage/docs/gsutil_install

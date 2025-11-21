@@ -1,0 +1,37 @@
+# Data files (too large for git)
+data/reference/*.fa
+data/reference/*.fa.fai
+data/gnomad/*.vcf.bgz
+data/gnomad/*.vcf.bgz.tbi
+data/motifs/JASPAR/*.jaspar
+data/motifs/consensus/*.txt
+
+# Results (generated outputs)
+results/
+figures/
+
+# Logs
+logs/*.log
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+.pytest_cache/
+.ipynb_checkpoints/
+
+# Temporary files
+*.tmp
+*.swp
+*~
+.DS_Store
+
+# Keep directory structure
+!results/.gitkeep
+!figures/.gitkeep
+!logs/.gitkeep
+!data/reference/.gitkeep
+!data/gnomad/.gitkeep
+!data/motifs/JASPAR/.gitkeep
+!data/motifs/consensus/.gitkeep

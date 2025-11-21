@@ -1,0 +1,94 @@
+# ========================================
+# Dormant Site Activation Pipeline Config
+# ========================================
+
+# Transcription Factor Configuration
+tf_name: "AP1"
+motif_id: "MA0099.3"  # JASPAR ID for AP1
+
+# Reference Genome
+reference_genome: "data/reference/GRCh38.fa"
+
+# gnomAD v4.1 Configuration (GRCh38)
+gnomad:
+  root: "/mnt/data_1/gnomAD_data/raw/gnomad_v4.1"
+  vcf_dir: "data/gnomad"  # Directory with per-chromosome VCFs (symlinks)
+  vcf_pattern: "gnomad.genomes.v4.1.sites.{chr}.vcf.bgz"  # {chr} will be chr1, chr2, etc.
+  coverage: "/mnt/data_1/gnomAD_data/raw/gnomad_v4.1/coverage"
+  constraint: "/mnt/data_1/gnomAD_data/raw/gnomad_v4.1/constraint/gnomad.v4.1.constraint.json.bgz"
+
+# AlphaGenome Configuration
+alphagenome:
+  model_path: "/mnt/models/alphagenome/"
+  context_bp: 1000  # ±1kb window around motif
+  batch_size: 100   # sequences per batch
+  tracks:
+    - "ATAC"
+    - "H3K27ac"
+    - "H3K4me3"
+    - "TF_binding"
+
+# Motif Scanning Parameters
+motif_scan:
+  tool: "fimo"  # options: "fimo" or "moods"
+  pvalue_threshold: 1e-3
+  background: "uniform"  # or path to background file
+  tier_cutoffs:
+    tier0: 0.95  # strong matches (≥95% PWM score)
+    tier1: 0.85  # medium matches
+    tier2: 0.70  # weak matches
+    tier3: 0.50  # very weak/near-motif
+
+# Mutation Path Parameters
+mutation_paths:
+  max_hamming_distance: 3  # maximum mutations to consensus
+  enumerate_all: true       # enumerate all minimal paths
+
+# Population Genetics Filters
+population:
+  min_af: 0.0          # minimum allele frequency
+  max_af: 1.0          # maximum allele frequency
+  min_coverage: 20     # minimum coverage depth
+  require_pass: true   # require PASS filter in VCF
+
+# Activation Landscape Computation
+landscape:
+  x_axis:
+    formula: "-log10(max_af + 1e-12) * hamming_dist"
+    name: "Population Constraint Score"
+  y_axis:
+    formula: "max(delta_alphagenome)"
+    features: ["ATAC", "H3K27ac", "TF_binding"]
+    name: "Functional Impact Score"
+  
+  quadrants:
+    high_impact_accessible:     # Q1: high Y, low X
+      x_max: 5
+      y_min: 0.5
+    high_impact_constrained:    # Q2: high Y, high X
+      x_min: 5
+      y_min: 0.5
+    low_impact_accessible:      # Q3: low Y, low X
+      x_max: 5
+      y_max: 0.5
+    low_impact_constrained:     # Q4: low Y, high X
+      x_min: 5
+      y_max: 0.5
+
+# Output Directories
+output:
+  results: "results"
+  figures: "figures"
+  logs: "logs"
+
+# Computational Resources
+resources:
+  threads: 24  # i9-13900K has 24 cores (8P + 16E)
+  memory_gb: 128  # Conservative limit, leaving headroom for system
+  tmpdir: "/tmp"
+
+# Logging
+logging:
+  level: "INFO"  # DEBUG, INFO, WARNING, ERROR
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  file: "logs/pipeline.log"
