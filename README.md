@@ -277,12 +277,6 @@ CU Boulder LAYER Lab
 
 ---
 
-## 📄 License
-
-[Add your license here]
-
----
-
 ## 🔄 Version
 
 **Current Status:** Module 01 Complete  
