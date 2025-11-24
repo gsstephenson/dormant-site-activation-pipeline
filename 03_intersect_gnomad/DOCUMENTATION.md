@@ -44,13 +44,35 @@ Variants with AF=0 (not observed in gnomAD's 807K individuals) represent the **m
 4. **X-axis calculation:** Epsilon substitution (1e-12) is applied **ONLY** during landscape X-axis computation to avoid log(0) errors - NOT during data storage
 
 **Output Columns:**
-- `paths_with_gnomad.tsv`: Includes `is_af_zero` column (1 if AF=0, 0 otherwise)
-- `path_af_summary.tsv`: Includes `num_af_zero` column (count of AF=0 steps per path)
+- `paths_with_gnomad.tsv`: 
+  * `is_af_zero` (1 if AF=0, 0 otherwise)
+  * `is_missing` (1 if no gnomAD record, 0 if matched)
+  * `coverage_confidence` (missing/high/medium/low/zero_an)
+  * `AN` (allele number = 2× sample size at this position)
+
+- `path_af_summary.tsv`: 
+  * `num_af_zero` (count of AF=0 steps per path)
+  * `num_missing` (count of missing variants per path)
+  * `min_AN`, `mean_AN` (coverage metrics across steps)
+  * `all_af_zero_high_conf` (1 if all steps AF=0 with AN≥50K)
 
 **Constraint Metrics:**
-- Paths with ALL steps AF=0: Completely unobserved activation route (most constrained)
+- **High-confidence constraint**: ALL steps AF=0 **AND** min_AN ≥ 50,000 (well-covered in >25K individuals)
+- **Uncertain constraint**: ALL steps AF=0 **BUT** low AN or missing gnomAD records
 - Paths with SOME steps AF=0: Partially constrained activation route
 - Mean num_af_zero per path: Overall constraint level across the dataset
+
+**Coverage Confidence Categories (based on AN):**
+- `high`: AN ≥ 50,000 (>25K individuals, strong signal)
+- `medium`: AN ≥ 10,000 (>5K individuals, moderate signal)
+- `low`: AN > 0 but < 10,000 (poor coverage, weak signal)
+- `missing`: No gnomAD record (unknown coverage)
+- `zero_an`: AN = 0 (edge case, shouldn't occur)
+
+**Interpreting Results:**
+- Use `all_af_zero_high_conf=1` to identify **true constrained sites** with high statistical power
+- Use AN percentiles to determine appropriate coverage cutoffs for your analysis
+- Filter by `coverage_confidence='high'` for most reliable constraint inferences
 
 ## Usage
 

@@ -307,6 +307,11 @@ def match_paths_to_gnomad(
     logger.info(f"  Missing from gnomAD: {num_missing:,} steps ({100*num_missing/len(merged_df):.1f}%)")
     logger.info(f"  ⚠ Missing variants will be assigned AF=0.0 (most constrained)")
     
+    # Distinguish missing variants from observed AF=0
+    # Missing: No gnomAD record (unknown coverage)
+    # Observed AF=0: gnomAD record exists with AF=0 and known AN (high confidence constraint)
+    merged_df['is_missing'] = merged_df['AF'].isna().astype(int)
+    
     # Fill missing values with AF=0 (literal zero, not epsilon)
     # These represent variants NOT observed in 807K gnomAD individuals
     # Epsilon substitution (1e-12) is applied ONLY during X-axis calculation to avoid log(0)
@@ -315,8 +320,25 @@ def match_paths_to_gnomad(
     merged_df['AN'] = merged_df['AN'].fillna(0)
     merged_df['nhomalt'] = merged_df['nhomalt'].fillna(0)
     
-    # Add flag for AF=0 (important metric for constraint analysis)
+    # Add flags for constraint analysis
     merged_df['is_af_zero'] = (merged_df['AF'] == 0.0).astype(int)
+    
+    # Add coverage confidence categories based on AN (allele number)
+    # High AN = well-covered, AF=0 is strong evidence of constraint
+    # Low/zero AN = poorly covered or missing, AF=0 is uncertain
+    def categorize_confidence(row):
+        if row['is_missing']:
+            return 'missing'  # No gnomAD record
+        elif row['AN'] >= 50000:
+            return 'high'  # Well-covered (>25K individuals)
+        elif row['AN'] >= 10000:
+            return 'medium'  # Moderate coverage
+        elif row['AN'] > 0:
+            return 'low'  # Poor coverage
+        else:
+            return 'zero_an'  # AN=0 (shouldn't happen, but handle it)
+    
+    merged_df['coverage_confidence'] = merged_df.apply(categorize_confidence, axis=1)
     
     # Save
     merged_df.to_csv(output_file, sep='\t', index=False)
@@ -368,15 +390,24 @@ def summarize_paths_af(
         'AF': ['max', 'mean', 'sum'],  # Max, mean, sum of AF across steps
         'AC': 'sum',
         'nhomalt': 'sum',
-        'is_af_zero': 'sum'  # Count of AF=0 steps (constraint metric)
+        'AN': ['min', 'mean'],  # Min and mean AN (coverage) across steps
+        'is_af_zero': 'sum',  # Count of AF=0 steps (constraint metric)
+        'is_missing': 'sum'  # Count of missing variants (unknown coverage)
     }).reset_index()
     
     # Flatten column names
     path_summary.columns = [
         'path_id', 'site_id', 'chr', 'motif_start', 'motif_end', 'strand',
         'tier', 'pwm_score', 'hamming_distance', 'total_steps',
-        'max_AF', 'mean_AF', 'sum_AF', 'total_AC', 'total_nhomalt', 'num_af_zero'
+        'max_AF', 'mean_AF', 'sum_AF', 'total_AC', 'total_nhomalt',
+        'min_AN', 'mean_AN', 'num_af_zero', 'num_missing'
     ]
+    
+    # Add high-confidence constraint flag (all steps AF=0 with high coverage)
+    path_summary['all_af_zero_high_conf'] = (
+        (path_summary['num_af_zero'] == path_summary['total_steps']) & 
+        (path_summary['min_AN'] >= 50000)
+    ).astype(int)
     
     # Add path accessibility score
     # Simple version: max AF across all steps
@@ -388,10 +419,23 @@ def summarize_paths_af(
     # Log constraint metrics (AF=0)
     paths_all_af_zero = (path_summary['num_af_zero'] == path_summary['total_steps']).sum()
     paths_some_af_zero = (path_summary['num_af_zero'] > 0).sum()
+    paths_high_conf_constraint = path_summary['all_af_zero_high_conf'].sum()
+    
     logger.info(f"\n  Constraint metrics:")
     logger.info(f"    Paths with ALL steps AF=0: {paths_all_af_zero:,} ({100*paths_all_af_zero/len(path_summary):.1f}%)")
+    logger.info(f"      → High confidence (AN≥50K): {paths_high_conf_constraint:,} ({100*paths_high_conf_constraint/len(path_summary):.1f}%)")
     logger.info(f"    Paths with SOME steps AF=0: {paths_some_af_zero:,} ({100*paths_some_af_zero/len(path_summary):.1f}%)")
     logger.info(f"    Mean num_af_zero per path: {path_summary['num_af_zero'].mean():.2f}")
+    logger.info(f"    Mean num_missing per path: {path_summary['num_missing'].mean():.2f}")
+    
+    # Log coverage statistics (AN distribution)
+    logger.info(f"\n  Coverage metrics (AN = allele number):")
+    logger.info(f"    Mean AN across all paths: {path_summary['mean_AN'].mean():.0f}")
+    logger.info(f"    Min AN across all paths: {path_summary['min_AN'].mean():.0f}")
+    logger.info(f"\n  AN percentiles (min_AN per path):")
+    an_percentiles = path_summary['min_AN'].quantile([0, 0.25, 0.5, 0.75, 0.9, 0.95, 0.99, 1.0])
+    for pct, val in an_percentiles.items():
+        logger.info(f"    {int(pct*100):3d}th percentile: {val:,.0f}")
     
     logger.info("\n  AF distribution (max_AF per path):")
     af_bins = [0, 1e-6, 1e-5, 1e-4, 1e-3, 0.01, 0.05, 0.1, 1.0]
