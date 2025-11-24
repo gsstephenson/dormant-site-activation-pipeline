@@ -300,15 +300,23 @@ def match_paths_to_gnomad(
     
     # Count matches
     num_matched = merged_df['AF'].notna().sum()
+    num_missing = merged_df['AF'].isna().sum()
     percent_matched = 100 * num_matched / len(merged_df)
     
     logger.info(f"\n  Matched {num_matched:,} / {len(merged_df):,} mutation steps ({percent_matched:.1f}%)")
+    logger.info(f"  Missing from gnomAD: {num_missing:,} steps ({100*num_missing/len(merged_df):.1f}%)")
+    logger.info(f"  ⚠ Missing variants will be assigned AF=0.0 (most constrained)")
     
-    # Fill missing values
+    # Fill missing values with AF=0 (literal zero, not epsilon)
+    # These represent variants NOT observed in 807K gnomAD individuals
+    # Epsilon substitution (1e-12) is applied ONLY during X-axis calculation to avoid log(0)
     merged_df['AF'] = merged_df['AF'].fillna(0.0)
     merged_df['AC'] = merged_df['AC'].fillna(0)
     merged_df['AN'] = merged_df['AN'].fillna(0)
     merged_df['nhomalt'] = merged_df['nhomalt'].fillna(0)
+    
+    # Add flag for AF=0 (important metric for constraint analysis)
+    merged_df['is_af_zero'] = (merged_df['AF'] == 0.0).astype(int)
     
     # Save
     merged_df.to_csv(output_file, sep='\t', index=False)
@@ -359,14 +367,15 @@ def summarize_paths_af(
         'total_steps': 'first',
         'AF': ['max', 'mean', 'sum'],  # Max, mean, sum of AF across steps
         'AC': 'sum',
-        'nhomalt': 'sum'
+        'nhomalt': 'sum',
+        'is_af_zero': 'sum'  # Count of AF=0 steps (constraint metric)
     }).reset_index()
     
     # Flatten column names
     path_summary.columns = [
         'path_id', 'site_id', 'chr', 'motif_start', 'motif_end', 'strand',
         'tier', 'pwm_score', 'hamming_distance', 'total_steps',
-        'max_AF', 'mean_AF', 'sum_AF', 'total_AC', 'total_nhomalt'
+        'max_AF', 'mean_AF', 'sum_AF', 'total_AC', 'total_nhomalt', 'num_af_zero'
     ]
     
     # Add path accessibility score
@@ -376,7 +385,15 @@ def summarize_paths_af(
     # Log statistics
     logger.info(f"\n  Summary for {len(path_summary):,} unique paths")
     
-    logger.info("\n  AF distribution:")
+    # Log constraint metrics (AF=0)
+    paths_all_af_zero = (path_summary['num_af_zero'] == path_summary['total_steps']).sum()
+    paths_some_af_zero = (path_summary['num_af_zero'] > 0).sum()
+    logger.info(f"\n  Constraint metrics:")
+    logger.info(f"    Paths with ALL steps AF=0: {paths_all_af_zero:,} ({100*paths_all_af_zero/len(path_summary):.1f}%)")
+    logger.info(f"    Paths with SOME steps AF=0: {paths_some_af_zero:,} ({100*paths_some_af_zero/len(path_summary):.1f}%)")
+    logger.info(f"    Mean num_af_zero per path: {path_summary['num_af_zero'].mean():.2f}")
+    
+    logger.info("\n  AF distribution (max_AF per path):")
     af_bins = [0, 1e-6, 1e-5, 1e-4, 1e-3, 0.01, 0.05, 0.1, 1.0]
     af_counts = pd.cut(path_summary['max_AF'], bins=af_bins).value_counts().sort_index()
     for bin_range, count in af_counts.items():

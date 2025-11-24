@@ -29,8 +29,28 @@ Complete workflow that:
 **Outputs:**
 - `results/gnomad_intersection/{TF}/query_regions.bed` - BED file of query positions
 - `results/gnomad_intersection/{TF}/gnomad_query_results.tsv` - Raw bcftools query output
-- `results/gnomad_intersection/{TF}/paths_with_gnomad.tsv` - Mutation steps matched to gnomAD
-- `results/gnomad_intersection/{TF}/path_af_summary.tsv` - Per-path AF summary (max_AF, mean_AF, accessibility_score)
+- `results/gnomad_intersection/{TF}/paths_with_gnomad.tsv` - Mutation steps matched to gnomAD (includes `is_af_zero` flag)
+- `results/gnomad_intersection/{TF}/path_af_summary.tsv` - Per-path AF summary (max_AF, mean_AF, sum_AF, total_AC, total_nhomalt, **num_af_zero**)
+
+## AF=0 Handling (Critical for Constraint Analysis)
+
+**Biological Significance:**  
+Variants with AF=0 (not observed in gnomAD's 807K individuals) represent the **most constrained** mutations. These are likely under strong purifying selection and will appear at the far right of the X-axis landscape.
+
+**Implementation:**
+1. **Missing variants** (no match in gnomAD) are assigned **AF=0.0** (literal zero)
+2. **Storage:** AF=0.0 is stored as a true zero in all output files
+3. **Tracking:** The `is_af_zero` flag (0/1) and `num_af_zero` count enable constraint analysis
+4. **X-axis calculation:** Epsilon substitution (1e-12) is applied **ONLY** during landscape X-axis computation to avoid log(0) errors - NOT during data storage
+
+**Output Columns:**
+- `paths_with_gnomad.tsv`: Includes `is_af_zero` column (1 if AF=0, 0 otherwise)
+- `path_af_summary.tsv`: Includes `num_af_zero` column (count of AF=0 steps per path)
+
+**Constraint Metrics:**
+- Paths with ALL steps AF=0: Completely unobserved activation route (most constrained)
+- Paths with SOME steps AF=0: Partially constrained activation route
+- Mean num_af_zero per path: Overall constraint level across the dataset
 
 ## Usage
 
