@@ -33,7 +33,13 @@ results/gnomad_intersection/AP1/unique_variants.tsv    # Deduplicated (recommend
 Expected columns:
 - `chr`, `genomic_position`, `ref_base`, `alt_base`
 - `AF`, `AC`, `AN` (gnomAD allele frequency data)
+- `is_missing`, `coverage_confidence` (Module 03 coverage quality metrics)
 - `path_id`, `step_num`, `site_id`, `tier`
+
+**Note on Module 03 updates:** The input now includes AN-based coverage confidence metrics:
+- `is_missing`: Flag for variants not found in gnomAD
+- `coverage_confidence`: high/medium/low/missing based on AN (allele number)
+- These metrics help distinguish true constraint (AF=0 with high AN) from low coverage
 
 ## Output
 
@@ -82,11 +88,22 @@ results/alphagenome/AP1/
 - Scores can be merged back to all paths for downstream analysis
 - Reduces 38,961 steps → 6,921 unique variants (saves ~6.6 hours)
 
+**Critical: AF=0 variants are INCLUDED**
+- **KEEP:** Variants observed in gnomAD (is_missing=0), including AF=0 with known AN
+- **SKIP:** Variants missing from gnomAD (is_missing=1, unknown coverage)
+- **Rationale:** AF=0 with high AN (≥50K) represents true purifying selection - these are the most interesting constraint candidates and MUST be scored by AlphaGenome
+
 ```bash
 python 04_run_alphagenome/prepare_unique_variants.py
 ```
 
 This creates `results/gnomad_intersection/AP1/unique_variants.tsv` with 6,921 unique variants.
+
+**Output includes:**
+- Coverage breakdown (observed vs missing variants)
+- Coverage confidence distribution (high/medium/low based on AN)
+- AN (allele number) statistics for unique variants
+- Identifies high-confidence variants (AN≥50K) suitable for downstream analysis
 
 **Expected runtime:** ~84 minutes (~1.4 hours) at 1.37 variants/sec
 

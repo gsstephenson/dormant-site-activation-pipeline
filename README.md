@@ -144,15 +144,25 @@ Enumerate minimal mutation paths to consensus motif.
 ---
 
 ### Module 03: gnomAD Intersection [Complete]
-Query population variants that match activating mutations.
+Query population variants that match activating mutations with AN-based coverage confidence.
 
-**Status:** ✅ Complete (ALL 24 chromosomes)  
+**Status:** ✅ Complete (ALL 24 chromosomes) with coverage quality metrics  
 **Documentation:** `03_intersect_gnomad/DOCUMENTATION.md`
+
+**Key features:**
+- **AF=0 handling:** Missing variants assigned AF=0 (literal zero, epsilon only for X-axis)
+- **Coverage confidence:** Uses AN (allele number) to distinguish true constraint from low coverage
+  - High confidence: AN≥50K (>25K individuals)
+  - Medium: AN≥10K
+  - Low: AN>0 but <10K
+  - Missing: No gnomAD record
+- **Constraint metrics:** `num_af_zero`, `num_missing`, `all_af_zero_high_conf` flag
 
 **Key outputs:**
 - 867,406 gnomAD variants retrieved (ALL 24 chromosomes)
 - 38,961 mutation steps matched to population data (0.21% of total)
 - Allele frequency distribution: 39.6% rare, 44.7% low, 9.3% moderate, 6.3% common
+- Coverage quality tracked via `min_AN`, `mean_AN`, `coverage_confidence` fields
 
 **Coverage:**
 - ✅ Successfully queried: ALL chromosomes (chr1-22, X, Y) - 100% success

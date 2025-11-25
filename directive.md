@@ -345,7 +345,13 @@ These already exist in `02_generate_mutation_paths/enumerate_paths.py` – modif
    
    **Critical:** Store AF=0 as literal 0.0 in output files. The epsilon substitution (1e-12) is applied **only** during X-axis calculation to avoid log(0) errors, not during data storage.
 
-5. Summarize by **path_id** (and optionally by site_id):
+5. **Add coverage confidence metrics** (using AN field):
+   
+   * `is_missing` - Flag for variants not in gnomAD (1) vs matched (0)
+   * `coverage_confidence` - Categories: high (AN≥50K), medium (AN≥10K), low (AN>0), missing (no record)
+   * Track AN values to distinguish true constraint (high AN, AF=0) from low coverage (low/zero AN, AF=0)
+
+6. Summarize by **path_id** (and optionally by site_id):
 
    * `max_AF` (true value, including 0.0 for missing variants)
    * `mean_AF`
@@ -353,7 +359,10 @@ These already exist in `02_generate_mutation_paths/enumerate_paths.py` – modif
    * `total_steps`
    * `total_AC`
    * `total_nhomalt`
+   * `min_AN`, `mean_AN` (coverage metrics across steps)
    * `num_af_zero` (count of steps with AF=0 - important metric for constraint analysis)
+   * `num_missing` (count of steps missing from gnomAD)
+   * `all_af_zero_high_conf` (flag: all steps AF=0 AND min_AN≥50K - true purifying selection)
 
 **Outputs:**
 
