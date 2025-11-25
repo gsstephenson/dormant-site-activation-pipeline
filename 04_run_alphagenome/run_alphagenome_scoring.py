@@ -65,13 +65,19 @@ def score_variants_alphagenome(variants_df, api_key, limit=None):
     logger.info("Initializing AlphaGenome client with API key...")
     client = dna_client.create(api_key=api_key)
     
-    # Define scorers
-    # Use CHIP_HISTONE for TF binding and chromatin accessibility
-    scorers = [variant_scorers.RECOMMENDED_VARIANT_SCORERS['CHIP_HISTONE']]
+    # Define scorers - USE ALL SCORERS to capture multi-modal features
+    # This captures: expression (RNA_SEQ), chromatin accessibility (ATAC, DNASE),
+    # TF binding (CHIP_TF), histone modifications (CHIP_HISTONE), 3D contacts (CONTACT_MAPS),
+    # transcript features (CAGE, PROCAP, SPLICE_*), and more
+    # Total: 19 scorers × ~5K tracks each = ~89K tracks per variant
+    scorers = list(variant_scorers.RECOMMENDED_VARIANT_SCORERS.values())
     organism = dna_client.Organism.HOMO_SAPIENS
     
     logger.info(f"Scoring {len(variants_df)} variants with 1MB context windows")
     logger.info(f"Context window size: {dna_client.SEQUENCE_LENGTH_1MB:,} bp")
+    logger.info(f"Using {len(scorers)} scorers to capture multi-modal features:")
+    logger.info(f"  Output types: RNA_SEQ, ATAC, DNASE, CHIP_TF, CHIP_HISTONE, CONTACT_MAPS, CAGE, PROCAP, SPLICE_*")
+    logger.info(f"  Expected ~89K tracks per variant (vs 1.1K with single scorer)")
     
     if limit:
         variants_df = variants_df.head(limit)
@@ -198,22 +204,28 @@ def score_variants_alphagenome(variants_df, api_key, limit=None):
 
 def compute_summary_scores(predictions_df):
     """
-    Compute summary statistics per variant.
+    Compute summary statistics per variant and per variant-output_type.
     
-    AlphaGenome returns scores for multiple tracks/cell types.
-    Aggregate to get per-variant scores.
+    With multi-modal AlphaGenome output, we get predictions for:
+    - RNA_SEQ (gene expression)
+    - ATAC, DNASE (chromatin accessibility)
+    - CHIP_TF (TF binding)
+    - CHIP_HISTONE (histone modifications)
+    - CONTACT_MAPS (3D genome contacts)
+    - CAGE, PROCAP (transcription start sites)
+    - SPLICE_* (splicing)
     
     Args:
         predictions_df: Tidy scores from AlphaGenome (variant-track level)
         
     Returns:
-        DataFrame with one row per variant containing mean scores
+        tuple: (per_variant_summary, per_variant_output_type_summary)
     """
     logger = logging.getLogger(__name__)
     
     logger.info("Computing summary scores per variant...")
     
-    # Group by variant and compute mean quantile score
+    # Overall summary: mean across ALL tracks
     summary = predictions_df.groupby('variant_id_str').agg({
         'quantile_score': 'mean',  # Mean across all tracks
         'gnomad_AF': 'first',
@@ -227,9 +239,32 @@ def compute_summary_scores(predictions_df):
     track_counts = predictions_df.groupby('variant_id_str').size().rename('n_tracks')
     summary = summary.merge(track_counts, on='variant_id_str')
     
-    logger.info(f"Summary: {len(summary)} variants with mean scores")
+    logger.info(f"Summary: {len(summary)} variants with mean scores across all tracks")
     
-    return summary
+    # Feature-specific summary: mean per output_type (enables feature-specific analysis)
+    if 'output_type' in predictions_df.columns:
+        logger.info("Computing per-output_type summaries...")
+        feature_summary = predictions_df.groupby(['variant_id_str', 'output_type']).agg({
+            'quantile_score': 'mean',
+            'gnomad_AF': 'first',
+            'gnomad_AC': 'first',
+            'gnomad_AN': 'first'
+        }).reset_index()
+        
+        # Count tracks per feature
+        feature_track_counts = predictions_df.groupby(['variant_id_str', 'output_type']).size().rename('n_tracks')
+        feature_summary = feature_summary.merge(
+            feature_track_counts.reset_index(),
+            on=['variant_id_str', 'output_type']
+        )
+        
+        logger.info(f"Feature-specific summary: {len(feature_summary)} variant-output_type pairs")
+        logger.info(f"Output types: {sorted(feature_summary['output_type'].unique())}")
+        
+        return summary, feature_summary
+    else:
+        logger.warning("No output_type column found - skipping feature-specific summary")
+        return summary, None
 
 
 def main():
@@ -318,12 +353,34 @@ def main():
     logging.info(f"Saved raw predictions: {predictions_path}")
     logging.info(f"  {len(predictions_df)} variant-track pairs")
     
-    # Compute and save summary scores
-    summary_df = compute_summary_scores(predictions_df)
+    # Compute and save summary scores (both overall and per-feature)
+    summary_result = compute_summary_scores(predictions_df)
+    
+    # Handle both single and tuple returns for backwards compatibility
+    if isinstance(summary_result, tuple):
+        summary_df, feature_summary_df = summary_result
+    else:
+        summary_df = summary_result
+        feature_summary_df = None
+    
+    # Save overall summary
     summary_path = output_dir / "predictions_summary.tsv"
     summary_df.to_csv(summary_path, sep='\t', index=False)
-    logging.info(f"Saved summary scores: {summary_path}")
+    logging.info(f"Saved overall summary scores: {summary_path}")
     logging.info(f"  {len(summary_df)} variants")
+    
+    # Save feature-specific summary
+    if feature_summary_df is not None:
+        feature_summary_path = output_dir / "predictions_summary_by_feature.tsv"
+        feature_summary_df.to_csv(feature_summary_path, sep='\t', index=False)
+        logging.info(f"Saved feature-specific summary: {feature_summary_path}")
+        logging.info(f"  {len(feature_summary_df)} variant-output_type pairs")
+        
+        # Log feature distribution
+        feature_counts = feature_summary_df.groupby('output_type').size().sort_values(ascending=False)
+        logging.info(f"  Feature distribution:")
+        for feature, count in feature_counts.head(10).items():
+            logging.info(f"    {feature}: {count} variants")
     
     logging.info("="*80)
     logging.info("Module 04 complete!")

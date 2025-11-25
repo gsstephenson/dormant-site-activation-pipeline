@@ -180,15 +180,22 @@ python 03_intersect_gnomad/query_gnomad_vcfs.py --config pipeline_config.yaml
 ---
 
 ### Module 04: AlphaGenome Scoring [Ready]
-**Score functional impact of activating mutations using AlphaGenome with 1MB context windows.**
+**Score functional impact using AlphaGenome with multi-modal feature capture (expression, ATAC, DNase, TF binding, histones, Hi-C).**
 
-**Status:** ✅ Implementation complete - ready to run
+**Status:** ✅ Implementation complete - ready to run with multi-modal output
 
 **Implementation:** Follows proven methodology from `alphagenome-qtl-validation` repository
 - Uses `dna_client.SEQUENCE_LENGTH_1MB` (1,048,576 bp) context windows
 - Direct API usage via `client.score_variant()` 
-- CHIP_HISTONE scorer for TF binding and chromatin accessibility
-- Validated approach: r=0.40 correlation with GTEx caQTLs
+- **ALL 19 recommended variant scorers** for comprehensive feature coverage
+- Captures: RNA_SEQ, ATAC, DNASE, CHIP_TF, CHIP_HISTONE, CONTACT_MAPS, CAGE, PROCAP, SPLICE_*
+- ~89,000 tracks per variant across all cell types and feature types
+
+**Why store all features?**
+- AlphaGenome returns all features by default (no extra API cost)
+- Enables multi-modal validation: which feature best predicts evolutionary constraint?
+- Expected strongest signals: ΔTF_binding (AP-1), ΔH3K27ac, ΔExpression
+- Future-proof: no need to re-query expensive API
 
 **Documentation:** `04_run_alphagenome/README.md`
 
@@ -221,17 +228,21 @@ python 04_run_alphagenome/run_alphagenome_scoring.py \
     --config pipeline_config.yaml \
     --limit 2
 
-# Step 3: Full run (6,921 unique variants, ~84 minutes)
+# Step 3: Full run (6,921 unique variants, ~5-6 hours with multi-modal)
 python 04_run_alphagenome/run_alphagenome_scoring.py \
     --config pipeline_config.yaml
 ```
 
 **Expected outputs:**
-- `results/alphagenome/AP1/predictions.parquet` - Raw scores (variant-track pairs)
-- `results/alphagenome/AP1/predictions_summary.tsv` - Mean scores per variant
-- Output size: ~7.7M variant-track predictions (6,921 variants × 1,116 tracks)
+- `results/alphagenome/AP1/predictions.parquet` - Raw multi-modal scores (~620M variant-track pairs, ~12 GB)
+- `results/alphagenome/AP1/predictions_summary.tsv` - Overall mean scores per variant (6,921 variants)
+- `results/alphagenome/AP1/predictions_summary_by_feature.tsv` - Per-feature means (76K variant-feature pairs)
+- Output size: 6,921 variants × 89,431 tracks = 620M predictions
 
-**Performance:** ~1.37 variants/sec, 6,921 variants ≈ 84 minutes (~1.4 hours)
+**Performance:** 
+- Multi-modal (19 scorers): ~0.017 variants/sec, 6,921 variants ≈ **5-6 hours**
+- Single scorer (legacy): ~1.37 variants/sec, 6,921 variants ≈ 84 minutes
+- **Recommendation:** Run in tmux/screen for long jobs
 
 ---
 

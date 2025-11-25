@@ -76,9 +76,9 @@ def test_variant_scoring(client):
         interval = variant.reference_interval.resize(dna_client.SEQUENCE_LENGTH_1MB)
         print(f"  Interval: {interval.chromosome}:{interval.start}-{interval.end} ({interval.end-interval.start:,} bp)")
         
-        # Score with CHIP_HISTONE
-        scorers = [variant_scorers.RECOMMENDED_VARIANT_SCORERS['CHIP_HISTONE']]
-        print(f"  Scoring with {len(scorers)} scorer(s)...")
+        # Score with ALL scorers to capture all features (expression, ATAC, DNase, histones)
+        scorers = list(variant_scorers.RECOMMENDED_VARIANT_SCORERS.values())
+        print(f"  Scoring with {len(scorers)} scorer(s): {list(variant_scorers.RECOMMENDED_VARIANT_SCORERS.keys())}...")
         
         scores = client.score_variant(
             interval=interval,
@@ -92,6 +92,10 @@ def test_variant_scoring(client):
         
         print(f"✓ Successfully scored variant")
         print(f"  Returned {len(df)} track scores")
+        print(f"  Columns: {df.columns.tolist()}")
+        print(f"  Unique output_type values: {df['output_type'].unique().tolist() if 'output_type' in df.columns else 'N/A'}")
+        print(f"  Unique histone_mark values: {sorted(df['histone_mark'].dropna().unique().tolist()) if 'histone_mark' in df.columns else 'N/A'}")
+        print(f"  Sample track names: {df['track_name'].head(5).tolist() if 'track_name' in df.columns else 'N/A'}")
         print(f"  Mean quantile score: {df['quantile_score'].mean():.3f}")
         print(f"  Score range: [{df['quantile_score'].min():.3f}, {df['quantile_score'].max():.3f}]")
         
