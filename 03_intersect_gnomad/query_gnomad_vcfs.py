@@ -30,7 +30,7 @@ def query_single_chromosome(chrom, vcf_dir, vcf_pattern, bed_df, threads_per_job
     OPTIMIZED:
     - Uses bcftools --threads for decompression parallelism
     - Efficient BED file handling
-    - Robust error handling with 6-hour timeout
+    - Robust error handling with no timeout (runs until completion)
     
     Parameters
     ----------
@@ -78,14 +78,13 @@ def query_single_chromosome(chrom, vcf_dir, vcf_pattern, bed_df, threads_per_job
                 str(vcf_file)
             ]
             
-            # Run bcftools with 6-hour timeout for large chromosomes
+            # Run bcftools with no timeout (runs until completion)
             result = subprocess.run(
                 cmd,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 text=True,
-                check=True,
-                timeout=21600  # 6 hour timeout per chromosome
+                check=True
             )
             
             num_variants = result.stdout.count('\n') if result.stdout else 0
@@ -94,8 +93,6 @@ def query_single_chromosome(chrom, vcf_dir, vcf_pattern, bed_df, threads_per_job
         except subprocess.CalledProcessError as e:
             error_msg = e.stderr[:500] if e.stderr else str(e)  # Truncate long errors
             return (chrom, "", 0, f"bcftools failed: {error_msg}")
-        except subprocess.TimeoutExpired:
-            return (chrom, "", 0, "Query timed out (>6 hours)")
         finally:
             # Clean up temp file
             Path(tmp_bed_path).unlink(missing_ok=True)
@@ -155,7 +152,7 @@ def query_gnomad_parallel(
     logger.info(f"  BED: {bed_file}")
     logger.info(f"  Parallel chromosome jobs: {n_jobs}")
     logger.info(f"  Total CPU utilization: ~{n_jobs} cores")
-    logger.info(f"  Timeout per chromosome: 6 hours")
+    logger.info(f"  No timeout limit - will run until all chromosomes complete")
     
     # Read BED to determine which chromosomes we need
     logger.info("\n  Loading BED file...")
