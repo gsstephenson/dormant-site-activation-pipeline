@@ -179,10 +179,10 @@ python 03_intersect_gnomad/query_gnomad_vcfs.py --config pipeline_config.yaml
 
 ---
 
-### Module 04: AlphaGenome Scoring [Ready]
+### Module 04: AlphaGenome Scoring [In Progress]
 **Score functional impact using AlphaGenome with multi-modal feature capture (expression, ATAC, DNase, TF binding, histones, Hi-C).**
 
-**Status:** ✅ Implementation complete - ready to run with multi-modal output
+**Status:** 🔄 Running full dataset (7,158 unique variants, ~2.5 hours estimated)
 
 **Implementation:** Follows proven methodology from `alphagenome-qtl-validation` repository
 - Uses `dna_client.SEQUENCE_LENGTH_1MB` (1,048,576 bp) context windows
@@ -234,25 +234,125 @@ python 04_run_alphagenome/run_alphagenome_scoring.py \
 ```
 
 **Expected outputs:**
-- `results/alphagenome/AP1/predictions.parquet` - Raw multi-modal scores (~620M variant-track pairs, ~12 GB)
-- `results/alphagenome/AP1/predictions_summary.tsv` - Overall mean scores per variant (6,921 variants)
-- `results/alphagenome/AP1/predictions_summary_by_feature.tsv` - Per-feature means (76K variant-feature pairs)
-- Output size: 6,921 variants × 89,431 tracks = 620M predictions
+- `results/alphagenome/AP1/predictions.parquet` - Raw multi-modal scores (~199M variant-track pairs, ~1.9 GB)
+- `results/alphagenome/AP1/predictions_summary.tsv` - Overall mean scores per variant (7,158 variants)
+- `results/alphagenome/AP1/predictions_summary_by_feature.tsv` - Per-feature means (~70K variant-feature pairs)
+- Output size: 7,158 variants × ~27,850 tracks/variant = 199M predictions
 
 **Performance:** 
-- Multi-modal (19 scorers): ~0.017 variants/sec, 6,921 variants ≈ **5-6 hours**
-- Single scorer (legacy): ~1.37 variants/sec, 6,921 variants ≈ 84 minutes
+- Multi-modal (19 scorers): ~1.27 sec/variant (much faster than expected)
+- Full run: 7,158 variants ≈ **2.5 hours**
 - **Recommendation:** Run in tmux/screen for long jobs
 
----
+**Note:** Final output includes checkpoint/recovery mechanism for large dataset stability
 
 ### Module 05: Activation Landscape [Planned]
-Compute 2D landscape coordinates.
+**Combine gnomAD constraint with AlphaGenome predictions to create 2D activation landscape.**
+
+**Status:** 📋 Not yet implemented  
+**Prerequisites:** ✅ Module 03 (gnomAD), 🔄 Module 04 (AlphaGenome)
+
+**What it does:**
+- Joins `paths_with_gnomad.tsv` with `predictions.parquet`
+- Selects "best path" per motif site (shortest path → lowest AF tiebreaker)
+- Computes landscape coordinates:
+  - **X-axis (constraint):** `-log10(max(AF, 1e-12)) × hamming_distance`
+  - **Y-axis (impact):** `max(ΔAlphaGenome)` [signed, preserves negatives]
+
+**Key outputs:**
+- `results/landscape/AP1/activation_landscape.tsv` - Final site-level table
+  - Columns: site_id, best_path_id, coordinates, max_AF_step, X_constraint, max_delta, Y_impact
+  - ~7,158 rows (one per unique variant with predictions)
+
+**Usage:**
+```bash
+python 05_compute_activation_landscape/combine_population_and_impact.py \
+    --config pipeline_config.yaml
+python 05_compute_activation_landscape/classify_quadrants.py \
+    --config pipeline_config.yaml
+```
 
 ---
 
 ### Module 06: Visualization [Planned]
-Generate plots and ranked candidate lists.
+**Generate publication-ready plots of the activation landscape.**
+
+**Status:** 📋 Not yet implemented  
+**Prerequisites:** ✅ Module 05 (activation_landscape.tsv)
+
+**What it does:**
+- Creates 2D scatter/hexbin plots
+- Highlights AF=0 sites, GWAS/ClinVar overlaps
+- Generates genome browser-style tracks for top candidates
+
+**Key outputs:**
+- `figures/AP1/activation_landscape.png` - Main 2D plot
+- `figures/AP1/activation_landscape_by_feature.png` - Separate plots per output_type
+- `figures/AP1/top_candidates_tracks.png` - IGV-style genome tracks
+
+**Usage:**
+```bash
+python 06_visualization/plot_landscape.py --config pipeline_config.yaml
+python 06_visualization/plot_genome_tracks.py --config pipeline_config.yaml
+```
+
+---
+
+### Module 07: Population Statistics [Planned]
+**Describe global allele frequency distribution across all AP-1 motif sites.**
+
+**Status:** 📋 Not yet implemented  
+**Prerequisites:** ✅ Module 03 (gnomAD data only - does NOT require AlphaGenome)
+
+**What it does:**
+- Quantifies constraint landscape-wide
+- Generates AF histogram with special handling for AF=0 sites
+- Computes summary statistics on population accessibility
+
+**Key outputs:**
+- `results/population_stats/AP1/max_af_histogram.tsv`
+- `figures/AP1/max_af_histogram.png`
+- Summary: fraction with AF=0, ultra-rare sites, AN coverage distribution
+
+**Usage:**
+```bash
+python 07_population_statistics/compute_af_distribution.py \
+    --config pipeline_config.yaml
+```
+
+**Note:** This module can run independently of Module 04 - it only analyzes gnomAD data.
+
+---
+
+### Module 08: GWAS & ClinVar Integration [Planned]
+**Annotate high-impact sites with disease associations for biological validation.**
+
+**Status:** 📋 Not yet implemented  
+**Prerequisites:** ✅ Module 05 (activation_landscape.tsv), ✅ ClinVar + GWAS data (downloaded)
+
+**What it does:**
+- Annotates motif sites with ClinVar pathogenic variants (exact position matches)
+- Checks proximity to GWAS associations (±10kb window)
+- Performs enrichment analysis: are high-constraint + high-impact sites enriched near disease variants?
+
+**Key outputs:**
+- `results/landscape/AP1/activation_landscape_annotated.tsv` - Adds columns:
+  - `near_gwas`, `gwas_traits`, `gwas_distance`
+  - `near_clinvar`, `clinvar_significance`, `clinvar_variant_id`
+- `results/validation/AP1/gwas_enrichment.tsv` - Statistical tests
+- Updated visualizations with disease overlays
+
+**Usage:**
+```bash
+python 08_gwas_clinvar_integration/annotate_with_gwas_clinvar.py \
+    --config pipeline_config.yaml
+```
+
+**Data sources:**
+- ClinVar GRCh38: 4.1M variants (downloaded to `/mnt/data_1/clinvar_data/`)
+- GWAS Catalog v1.0: 1M associations (downloaded to `/mnt/data_1/gwas_data/`)
+
+---erate plots and ranked candidate lists.
 
 ---
 
@@ -281,7 +381,16 @@ motif_scan:
 # AlphaGenome
 alphagenome:
   model_path: "/mnt/models/alphagenome/"
-  context_bp: 1000
+**Latest Update:** 
+- ✅ Module 03: Complete with 40,195 observed variants (ALL 24 chromosomes), 99.1% high coverage (AN≥50K)
+- 🔄 Module 04: Running full AlphaGenome scoring (7,158 unique variants, ~2.5 hours)
+- 📋 Module 05-08: Specifications complete, ready for implementation once Module 04 finishes
+
+**Module Dependencies:**
+- **Module 07** (Population Statistics): Only needs Module 03 ✅ - can run now
+- **Module 05** (Activation Landscape): Needs Module 03 ✅ + Module 04 🔄
+- **Module 06** (Visualization): Needs Module 05
+- **Module 08** (GWAS/ClinVar): Needs Module 05 + downloaded data ✅
 ```
 
 ---

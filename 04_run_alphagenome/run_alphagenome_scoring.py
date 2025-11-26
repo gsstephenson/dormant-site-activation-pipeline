@@ -188,8 +188,21 @@ def score_variants_alphagenome(variants_df, api_key, limit=None):
     logger.info(f"Metadata entries: {len(metadata_df)}")
     logger.info(f"Sample metadata variant_id: {metadata_df['variant_id_str'].iloc[0] if len(metadata_df) > 0 else 'N/A'}")
     
-    # Merge metadata into scores  
-    df = df.merge(metadata_df, on='variant_id_str', how='left')
+    # CHECKPOINT: Save raw predictions before merge (in case merge crashes with large datasets)
+    raw_output_path = output_dir / 'predictions_raw.parquet'
+    logger.info(f"Saving raw predictions checkpoint to {raw_output_path}...")
+    df.to_parquet(raw_output_path, index=False, compression='snappy')
+    logger.info(f"Raw predictions saved ({len(df)} rows)")
+    
+    # Merge metadata into scores using memory-efficient approach
+    logger.info("Merging metadata (memory-efficient left join)...")
+    df = df.merge(metadata_df, on='variant_id_str', how='left', copy=False)
+    
+    # Clean up metadata_df to free memory before continuing
+    del metadata_df
+    import gc
+    gc.collect()
+    logger.info("Metadata merged and temporary objects cleaned up")
     
     logger.info(f"Successfully scored {len(df)} variant-track pairs")
     logger.info(f"Unique variants: {df['variant_id_str'].nunique()}")
@@ -331,12 +344,21 @@ def main():
     variants_df = pd.read_csv(variants_path, sep='\t', low_memory=False)
     logging.info(f"Loaded {len(variants_df)} variants")
     
-    # Score variants
-    predictions_df = score_variants_alphagenome(
-        variants_df=variants_df,
-        api_key=api_key,
-        limit=args.limit
-    )
+    # Check if we have a raw predictions checkpoint (from previous crash during merge)
+    raw_checkpoint = output_dir / 'predictions_raw.parquet'
+    if raw_checkpoint.exists():
+        logging.warning(f"Found raw predictions checkpoint: {raw_checkpoint}")
+        logging.warning("This suggests a previous run crashed during metadata merge")
+        logging.info("Loading checkpoint instead of re-running AlphaGenome scoring...")
+        predictions_df = pd.read_parquet(raw_checkpoint)
+        logging.info(f"Loaded {len(predictions_df)} variant-track pairs from checkpoint")
+    else:
+        # Score variants normally
+        predictions_df = score_variants_alphagenome(
+            variants_df=variants_df,
+            api_key=api_key,
+            limit=args.limit
+        )
     
     if predictions_df is None or len(predictions_df) == 0:
         logging.error("No predictions generated. Exiting.")
@@ -381,6 +403,12 @@ def main():
         logging.info(f"  Feature distribution:")
         for feature, count in feature_counts.head(10).items():
             logging.info(f"    {feature}: {count} variants")
+    
+    # Clean up checkpoint file on successful completion
+    raw_checkpoint = output_dir / 'predictions_raw.parquet'
+    if raw_checkpoint.exists():
+        logging.info(f"Removing checkpoint file (no longer needed): {raw_checkpoint}")
+        raw_checkpoint.unlink()
     
     logging.info("="*80)
     logging.info("Module 04 complete!")
