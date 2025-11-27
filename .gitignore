@@ -1,31 +1,98 @@
 # Data files (too large for git)
 data/reference/*.fa
 data/reference/*.fa.fai
+data/reference/*.dict
 data/gnomad/*.vcf.bgz
 data/gnomad/*.vcf.bgz.tbi
+data/gnomad/*.tbi
 data/motifs/JASPAR/*.jaspar
+data/motifs/JASPAR/*.meme
 data/motifs/consensus/*.txt
 
-# Results (generated outputs)
-results/
+# Results (generated outputs - can be regenerated)
+results/motif_scan/
+results/mutation_paths/
+results/gnomad_intersection/
+results/alphagenome/
+results/landscape/
+results/population_stats/
+results/validation/
+
+# Figures (generated)
 figures/
 
-# Logs
-logs/*.log
+# Logs (can be large)
+logs/
+*.log
 
-# Python
+# Python cache
 __pycache__/
 *.pyc
 *.pyo
+*.pyd
+*.so
+*.egg
 *.egg-info/
 .pytest_cache/
 .ipynb_checkpoints/
+.python-version
+*.coverage
+.coverage.*
+htmlcov/
+
+# Virtual environments
+venv/
+env/
+ENV/
+.venv/
+alphagenome-env/
 
 # Temporary files
 *.tmp
 *.swp
 *~
 .DS_Store
+*.bak
+*.old
+
+# Editor/IDE
+.vscode/
+.idea/
+*.sublime-*
+
+# OS files
+Thumbs.db
+.Spotlight-V100
+.Trashes
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+
+# Large intermediate files
+*.parquet
+*.parquet.gzip
+*.h5
+*.hdf5
+*.pickle
+*.pkl
+*.npy
+*.npz
+
+# Compressed archives
+*.tar
+*.tar.gz
+*.tgz
+*.zip
+*.7z
+
+# LaTeX compilation
+*.aux
+*.out
+*.toc
+*.synctex.gz
+*.fdb_latexmk
+*.fls
 
 # Keep directory structure
 !results/.gitkeep
@@ -35,6 +102,3 @@ __pycache__/
 !data/gnomad/.gitkeep
 !data/motifs/JASPAR/.gitkeep
 !data/motifs/consensus/.gitkeep
-
-# LaTeX compilation logs
-*.log
