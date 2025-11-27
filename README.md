@@ -267,55 +267,76 @@ python 04_run_alphagenome/run_alphagenome_scoring.py \
 
 ---
 
-### Module 05: Activation Landscape [Ready to Implement]
+### Module 05: Activation Landscape [Complete]
 **Combine gnomAD constraint with AlphaGenome predictions to create 2D activation landscape.**
 
-**Status:** 📋 Ready to implement  
-**Prerequisites:** ✅ Module 03 (gnomAD), ✅ Module 04 (AlphaGenome)
+**Status:** ✅ Complete  
+**Prerequisites:** ✅ Module 03 (gnomAD), ✅ Module 04 (AlphaGenome)  
+**Documentation:** `05_compute_activation_landscape/README.md`  
+**Scientific Report:** `05_compute_activation_landscape/SCIENTIFIC_REPORT.md`
 
-**What it does:**
-- Joins `paths_with_gnomad.tsv` with `predictions.parquet`
-- Selects "best path" per motif site (shortest path → lowest AF tiebreaker)
-- Computes landscape coordinates:
-  - **X-axis (constraint):** `-log10(max(AF, 1e-12)) × hamming_distance`
-  - **Y-axis (impact):** `max(ΔAlphaGenome)` [signed, preserves negatives]
+**Key Innovation - Biologically-Specific Y-Axis:**
+Instead of using `max()` across all AlphaGenome tracks (which conflates unrelated signals), we use **AP1-family-specific TF predictions**:
+```
+Y = max(quantile_score) for TF ∈ {JUND, JUN, JUNB, FOS, FOSL1, FOSL2, ATF3, ATF2, ATF7, BATF, MAFK}
+```
 
-**Key outputs:**
-- `results/landscape/AP1/activation_landscape.tsv` - Final site-level table
-  - Columns: site_id, best_path_id, coordinates, max_AF_step, X_constraint, max_delta, Y_impact
-  - ~7,158 rows (one per unique variant with predictions)
+**Landscape Coordinates:**
+- **X-axis (Accessibility):** `-log10(AF) × Hamming_distance`
+  - Low X = accessible (common variant, few mutations)
+  - High X = hard to access (rare variant, many mutations)
+- **Y-axis (Impact):** Max AP1-family TF binding quantile score
+  - Measures direct biological effect on AP1 binding
+
+**Key Results:**
+
+| Metric | Value |
+|--------|-------|
+| **Total variants** | 6,810 |
+| **High-priority candidates** | 1,624 (23.8%) |
+| **Strong AP1 gain (>90th %ile)** | 6,170 (90.6%) |
+| **Ultra-rare (AF < 0.01%)** | 5,798 (85.1%) |
+| **AP1 vs Enhancer correlation** | r = 0.545, p < 10⁻¹⁶ |
+
+**Quadrant Distribution:**
+- HIGH PRIORITY (Accessible + High Impact): 1,624 (23.8%)
+- High Impact, Hard to Access: 1,779 (26.1%)
+- Accessible, Low Impact: 1,781 (26.2%)
+- Low Priority: 1,626 (23.9%)
+
+**Top AP1-Family TFs:**
+- FOS: 25.8%
+- JUND: 16.8%
+- ATF3: 8.8%
+- FOSL2: 8.5%
+- ATF2: 8.1%
+
+**Validation:** Strong correlation (r=0.545) between AP1 binding impact and enhancer marks (H3K27ac/H3K4me1) confirms biological relevance.
 
 **Usage:**
 ```bash
-python 05_compute_activation_landscape/combine_population_and_impact.py \
-    --config pipeline_config.yaml
-python 05_compute_activation_landscape/classify_quadrants.py \
-    --config pipeline_config.yaml
+# Compute landscape (vectorized, ~30 seconds)
+conda run -n alphagenome-env python 05_compute_activation_landscape/compute_activation_landscape.py \
+  --predictions results/alphagenome/AP1/predictions.parquet \
+  --gnomad results/gnomad_intersection/AP1/all_observed_variants.tsv \
+  --output results/landscape/AP1
+
+# Generate figures
+conda run -n alphagenome-env python 05_compute_activation_landscape/plot_activation_landscape.py \
+  --input results/landscape/AP1/AP1_activation_landscape.tsv \
+  --output-dir figures/landscape
 ```
 
----
+**Output Files:**
+- `results/landscape/AP1/AP1_activation_landscape.tsv` - Complete landscape (6,810 variants)
+- `results/landscape/AP1/AP1_high_priority_candidates.tsv` - High-priority quadrant (1,624 variants)
+- `results/landscape/AP1/AP1_landscape_summary.txt` - Summary statistics
+- `figures/landscape/AP1_activation_landscape_main.png` - Main visualization
+- `figures/landscape/AP1_activation_landscape_comparison.png` - Multi-panel comparison
+- `figures/landscape/AP1_tf_breakdown.png` - TF contribution analysis
+- `figures/landscape/AP1_high_priority_candidates.png` - High-priority details
 
-### Module 06: Visualization [Planned]
-**Generate publication-ready plots of the activation landscape.**
-
-**Status:** 📋 Not yet implemented  
-**Prerequisites:** ✅ Module 05 (activation_landscape.tsv)
-
-**What it does:**
-- Creates 2D scatter/hexbin plots
-- Highlights AF=0 sites, GWAS/ClinVar overlaps
-- Generates genome browser-style tracks for top candidates
-
-**Key outputs:**
-- `figures/AP1/activation_landscape.png` - Main 2D plot
-- `figures/AP1/activation_landscape_by_feature.png` - Separate plots per output_type
-- `figures/AP1/top_candidates_tracks.png` - IGV-style genome tracks
-
-**Usage:**
-```bash
-python 06_visualization/plot_landscape.py --config pipeline_config.yaml
-python 06_visualization/plot_genome_tracks.py --config pipeline_config.yaml
-```
+**Performance:** ~35 seconds total (vectorized implementation processes 186M predictions efficiently)
 
 ---
 
@@ -373,8 +394,6 @@ python 08_gwas_clinvar_integration/annotate_with_gwas_clinvar.py \
 - ClinVar GRCh38: 4.1M variants (downloaded to `/mnt/data_1/clinvar_data/`)
 - GWAS Catalog v1.0: 1M associations (downloaded to `/mnt/data_1/gwas_data/`)
 
----erate plots and ranked candidate lists.
-
 ---
 
 ## Configuration
@@ -402,16 +421,7 @@ motif_scan:
 # AlphaGenome
 alphagenome:
   model_path: "/mnt/models/alphagenome/"
-**Latest Update (November 27, 2025):** 
-- ✅ Module 03: Complete with 867,406 gnomAD variants retrieved (ALL 24 chromosomes), 99.1% high coverage (AN≥50K)
-- ✅ Module 04: Complete with 186.7M variant-track predictions (6,810 variants, 95.1% success rate, 3.5 hours runtime)
-- 📋 Module 05-08: Specifications complete, ready for implementation
-
-**Module Dependencies:**
-- **Module 07** (Population Statistics): Only needs Module 03 ✅ - can run now
-- **Module 05** (Activation Landscape): Needs Module 03 ✅ + Module 04 🔄
-- **Module 06** (Visualization): Needs Module 05
-- **Module 08** (GWAS/ClinVar): Needs Module 05 + downloaded data ✅
+  batch_size: 32
 ```
 
 ---
@@ -420,10 +430,21 @@ alphagenome:
 
 ### Activation Landscape
 A 2D plot showing:
-- **X-axis**: Population accessibility/constraint  
-  Formula: `-log10(max_AF + 1e-12) × hamming_distance`
-- **Y-axis**: Functional impact  
-  Formula: `max(ΔAlphaGenome_feature)`
+- **X-axis**: Population accessibility × constraint  
+  Formula: `-log10(AF + 1e-12) × Hamming_distance`
+  - Combines allele frequency rarity with mutational distance from reference
+  - Higher values = rarer variants requiring more mutations
+- **Y-axis**: AP1-specific functional impact  
+  Formula: `max(quantile_score)` across 11 AP1-family TFs
+  - JUND, JUN, JUNB, FOS, FOSL1, FOSL2, ATF3, ATF2, ATF7, BATF, MAFK
+  - Uses quantile normalization for cross-track comparability
+  - Values 0-1, with >0.9 indicating top 10% predicted binding
+
+### High-Priority Candidates
+Variants in the upper-right quadrant:
+- Strong AP1 binding gain (>90th percentile)
+- Ultra-rare or absent in population (AF < 0.0001)
+- Represent most promising dormant sites for experimental validation
 
 ### Ranked Candidates
 List of dormant sites with:
@@ -506,7 +527,18 @@ CU Boulder LAYER Lab
 
 ## Version
 
-**Current Status:** Module 03 Complete (partial gnomAD coverage)  
-**Next:** Module 04 - AlphaGenome Functional Scoring
+**Current Status:** Module 05 Complete (Activation Landscape)  
+**Next:** Module 07 - Population Statistics (can run independently)
 
-**Latest Update:** Module 03 completed with 326K variants from 14 chromosomes. Large chromosomes (chr1-8, chr10, chr12) timed out and would require chunked queries for complete coverage.
+**Latest Update (Module 05 - November 27, 2025):**
+- ✅ Activation landscape computed for 6,810 variants
+- ✅ 1,624 high-priority candidates identified (23.8%)
+- ✅ 90.6% variants show strong AP1 binding gain (>90th percentile)
+- ✅ 4 publication-quality figures generated
+- ✅ Full scientific report available: `05_compute_activation_landscape/SCIENTIFIC_REPORT.md`
+
+**Key Results:**
+- X-axis formula: `-log10(AF) × Hamming_distance` (population accessibility)
+- Y-axis formula: `max(AP1 quantile)` across 11 AP1-family TFs
+- Top contributing TFs: FOS (25.8%), JUND (16.8%), ATF3 (8.8%)
+- Strong correlation between AP1 binding and enhancer marks (r=0.545)
