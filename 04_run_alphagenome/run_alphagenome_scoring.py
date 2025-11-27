@@ -36,7 +36,7 @@ def load_config(config_path: Path) -> dict:
         return yaml.safe_load(f)
 
 
-def score_variants_alphagenome(variants_df, api_key, limit=None):
+def score_variants_alphagenome(variants_df, api_key, output_dir, limit=None):
     """
     Score variants using AlphaGenome with 1MB context windows.
     
@@ -45,6 +45,7 @@ def score_variants_alphagenome(variants_df, api_key, limit=None):
     Args:
         variants_df: DataFrame with columns [chrom, mutation_pos or start, ref, alt, ...]
         api_key: AlphaGenome API key
+        output_dir: Path to output directory (for checkpoint saving)
         limit: Optional limit on number of variants to process (for testing)
         
     Returns:
@@ -188,11 +189,11 @@ def score_variants_alphagenome(variants_df, api_key, limit=None):
     logger.info(f"Metadata entries: {len(metadata_df)}")
     logger.info(f"Sample metadata variant_id: {metadata_df['variant_id_str'].iloc[0] if len(metadata_df) > 0 else 'N/A'}")
     
-    # CHECKPOINT: Save raw predictions before merge (in case merge crashes with large datasets)
-    raw_output_path = output_dir / 'predictions_raw.parquet'
-    logger.info(f"Saving raw predictions checkpoint to {raw_output_path}...")
-    df.to_parquet(raw_output_path, index=False, compression='snappy')
-    logger.info(f"Raw predictions saved ({len(df)} rows)")
+    # SKIP CHECKPOINT: System doesn't have enough RAM to save 199M rows
+    # Instead, proceed directly to merge which is more memory-efficient
+    # If merge fails, user will need to re-run API calls (~2.5 hours)
+    logger.info(f"Skipping checkpoint save (dataset too large: {len(df):,} rows)")
+    logger.info(f"Proceeding directly to memory-efficient merge...")
     
     # Merge metadata into scores using memory-efficient approach
     logger.info("Merging metadata (memory-efficient left join)...")
@@ -290,6 +291,8 @@ def main():
                        help='AlphaGenome API key (or set ALPHA_GENOME_KEY env var)')
     parser.add_argument('--limit', type=int,
                        help='Limit to first N variants (for testing)')
+    parser.add_argument('--clean', action='store_true',
+                       help='Remove checkpoint files before starting (forces re-scoring)')
     args = parser.parse_args()
     
     # Get API key
@@ -346,17 +349,28 @@ def main():
     
     # Check if we have a raw predictions checkpoint (from previous crash during merge)
     raw_checkpoint = output_dir / 'predictions_raw.parquet'
+    
+    # Clean checkpoint if requested
+    if args.clean and raw_checkpoint.exists():
+        checkpoint_size = raw_checkpoint.stat().st_size / 1e9
+        logging.info(f"--clean flag: Removing checkpoint file: {raw_checkpoint} ({checkpoint_size:.2f} GB)")
+        raw_checkpoint.unlink()
+        logging.info("Checkpoint removed - will re-run AlphaGenome scoring")
+    
     if raw_checkpoint.exists():
-        logging.warning(f"Found raw predictions checkpoint: {raw_checkpoint}")
+        checkpoint_size = raw_checkpoint.stat().st_size / 1e9
+        logging.warning(f"Found raw predictions checkpoint: {raw_checkpoint} ({checkpoint_size:.2f} GB)")
         logging.warning("This suggests a previous run crashed during metadata merge")
         logging.info("Loading checkpoint instead of re-running AlphaGenome scoring...")
+        logging.info("(Use --clean flag to force re-scoring)")
         predictions_df = pd.read_parquet(raw_checkpoint)
-        logging.info(f"Loaded {len(predictions_df)} variant-track pairs from checkpoint")
+        logging.info(f"Loaded {len(predictions_df):,} variant-track pairs from checkpoint")
     else:
         # Score variants normally
         predictions_df = score_variants_alphagenome(
             variants_df=variants_df,
             api_key=api_key,
+            output_dir=output_dir,
             limit=args.limit
         )
     
@@ -371,9 +385,13 @@ def main():
     
     # Save raw predictions
     predictions_path = output_dir / "predictions.parquet"
-    predictions_df.to_parquet(predictions_path, index=False)
+    logging.info(f"Saving final predictions to {predictions_path}...")
+    predictions_df.to_parquet(predictions_path, index=False, compression='snappy')
+    file_size_gb = predictions_path.stat().st_size / 1e9
     logging.info(f"Saved raw predictions: {predictions_path}")
-    logging.info(f"  {len(predictions_df)} variant-track pairs")
+    logging.info(f"  {len(predictions_df):,} variant-track pairs")
+    logging.info(f"  File size: {file_size_gb:.2f} GB")
+    logging.info(f"  Unique variants: {predictions_df['variant_id_str'].nunique():,}")
     
     # Compute and save summary scores (both overall and per-feature)
     summary_result = compute_summary_scores(predictions_df)
@@ -407,8 +425,12 @@ def main():
     # Clean up checkpoint file on successful completion
     raw_checkpoint = output_dir / 'predictions_raw.parquet'
     if raw_checkpoint.exists():
-        logging.info(f"Removing checkpoint file (no longer needed): {raw_checkpoint}")
+        checkpoint_size_gb = raw_checkpoint.stat().st_size / 1e9
+        logging.info(f"Removing checkpoint file (no longer needed): {raw_checkpoint} ({checkpoint_size_gb:.2f} GB)")
         raw_checkpoint.unlink()
+        logging.info("Checkpoint removed successfully")
+    else:
+        logging.info("No checkpoint file to clean up")
     
     logging.info("="*80)
     logging.info("Module 04 complete!")
