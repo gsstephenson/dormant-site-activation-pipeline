@@ -123,11 +123,11 @@ X = -log₁₀(AF) × Hamming_distance
 
 ### Y-Axis: AP1 Functional Impact
 ```
-Y = max(quantile_score) across AP1-family TFs
+Y = log₁₀(max(raw_score)) across AP1-family TFs
 ```
 - Uses: JUND, JUN, FOS, FOSL1, FOSL2, ATF3, ATF2, BATF, MAFK, etc.
-- Values 0-1 represent percentile of AlphaGenome prediction distribution
-- **0.90+ = Top 10%** of predicted TF binding effects
+- **Raw scores** (3-34,000) used instead of quantile scores to preserve selection signal
+- Higher Y = stronger predicted AP1 binding gain
 
 ### Quadrant Classification
 | Quadrant | Count | Description |

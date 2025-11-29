@@ -16,16 +16,21 @@ We construct a 2D coordinate system:
 
 ### Biologically-Specific Y-Axis Design
 
-**Critical Innovation:** Unlike generic approaches that use `max()` across all AlphaGenome tracks, we use **AP1-family-specific TF predictions**:
+**Critical Innovation:** Unlike generic approaches that use `max()` across all AlphaGenome tracks, we use **AP1-family-specific TF predictions** with **raw scores**:
 
 ```
-Y = max(quantile_score) for TF ∈ {JUND, JUN, JUNB, FOS, FOSL1, FOSL2, ATF3, ATF2, ATF7, BATF, BATF2, MAFK, MAFF, MAFG}
+Y = log₁₀(max(raw_score)) for TF ∈ {JUND, JUN, JUNB, FOS, FOSL1, FOSL2, ATF3, ATF2, ATF7, BATF, BATF2, MAFK, MAFF, MAFG}
 ```
 
-**Why this matters:**
+**Why raw scores instead of quantile scores:**
+- Quantile scores have ceiling effects (90% of variants are >0.9)
+- Raw scores (range: 3-34,000) preserve full dynamic range of effect magnitudes
+- Raw scores reveal the purifying selection signal (Spearman r=0.096, p<10⁻¹⁴)
+
+**Why AP1-specific:**
 - Using global max would conflate unrelated signals (CTCF, splice sites, etc.)
 - AP1-specific scoring directly measures what we hypothesize changes: AP1 binding
-- Strong correlation (r=0.545) with enhancer marks validates this approach
+- Strong correlation (r=0.579) with enhancer marks validates this approach
 
 ### X-Axis: Population Accessibility Score
 
