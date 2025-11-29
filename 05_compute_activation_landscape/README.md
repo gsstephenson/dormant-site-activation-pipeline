@@ -92,10 +92,10 @@ conda run -n alphagenome-env python plot_activation_landscape.py \
 
 | File | Description |
 |------|-------------|
-| `AP1_activation_landscape_main.png` | Main 2D scatter plot: X = population accessibility score, Y = AP1 TF impact. Points colored by log₁₀(AF). Green shading marks high-priority quadrant. Annotations show n=6,810 variants, 1,624 high-priority (23.8%). |
-| `AP1_activation_landscape_comparison.png` | 4-panel comparison: (A) AP1-family TF binding (primary Y-axis), (B) Global max across all tracks (less biologically specific), (C) Enhancer marks H3K27ac/H3K4me1 validation, (D) AP1 vs Enhancer correlation scatter showing r=0.545. |
-| `AP1_tf_breakdown.png` | 2-panel TF analysis: (A) Horizontal bar chart showing variant counts per AP1-family TF (FOS=1,754, JUND=1,141, ATF3=599...), (B) Box plots of quantile score distributions by TF. |
-| `AP1_high_priority_candidates.png` | 4-panel high-priority detail: (A) Zoomed scatter of 1,624 candidates, (B) AF distribution histogram showing ultra-rare enrichment, (C) Hamming distance bar chart, (D) Top 10 candidates table with variant IDs, scores, TFs. |
+| `AP1_activation_landscape_main.png` | Primary landscape visualization |
+| `AP1_activation_landscape_comparison.png` | Multi-panel comparison |
+| `AP1_tf_breakdown.png` | TF contribution analysis |
+| `AP1_high_priority_candidates.png` | High-priority candidate details |
 
 ### Scientific Report
 

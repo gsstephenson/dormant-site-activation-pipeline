@@ -5,7 +5,7 @@
 **Affiliations:**  
 ¹ LAYER Laboratory, Department of Molecular, Cellular, and Developmental Biology, University of Colorado Boulder, Boulder, CO 80309
 
-**Date:** November 27, 2025
+**Date:** November 29, 2025 (Updated with corrected statistical analysis)
 
 **Keywords:** transcription factor binding, AP1, regulatory variation, population genetics, AlphaGenome, functional genomics
 
@@ -13,7 +13,9 @@
 
 ## Abstract
 
-Transcription factor binding sites (TFBSs) are fundamental regulatory elements that control gene expression, yet the human genome harbors millions of "dormant" sequences that are near-matches to consensus motifs but lack sufficient affinity for functional binding. We hypothesized that naturally occurring genetic variants could activate these dormant sites, potentially creating novel regulatory elements with functional consequences. Here, we present a comprehensive computational analysis of dormant AP1 (FOS/JUN heterodimer) binding sites across the human genome, integrating motif scanning, population genetics from gnomAD v4.1, and functional impact prediction using AlphaGenome's multi-modal deep learning framework. We identified 6,810 variants that could activate dormant AP1 sites, with 90.6% (n=6,170) predicted to substantially increase AP1-family transcription factor binding. Strikingly, 85.1% of these activating variants are ultra-rare (AF < 0.01%), suggesting purifying selection against uncontrolled AP1 site activation. We constructed a two-dimensional "activation landscape" mapping population accessibility (X-axis) against functional impact (Y-axis), identifying 1,624 high-priority candidates that are both population-accessible and functionally impactful. The predominant AP1-family transcription factors showing predicted binding gains were FOS (25.8%), JUND (16.8%), and ATF3 (8.8%), with the strongest effects observed in endothelial cells, MCF-7 breast cancer cells, and HepG2 hepatocytes. A strong positive correlation between AP1 binding impact and enhancer mark activation (H3K27ac/H3K4me1; r=0.545, p<10⁻¹⁶) validates that predicted TF binding gains correspond to functional enhancer activation. These findings reveal that dormant AP1 sites represent a reservoir of latent regulatory potential, constrained by purifying selection, with implications for understanding regulatory evolution, disease mechanisms, and the functional consequences of rare non-coding variation.
+Transcription factor binding sites (TFBSs) are fundamental regulatory elements that control gene expression, yet the human genome harbors millions of "dormant" sequences that are near-matches to consensus motifs but lack sufficient affinity for functional binding. We hypothesized that naturally occurring genetic variants could activate these dormant sites, potentially creating novel regulatory elements with functional consequences. Here, we present a comprehensive computational analysis of dormant AP1 (FOS/JUN heterodimer) binding sites across the human genome, integrating motif scanning, population genetics from gnomAD v4.1, and functional impact prediction using AlphaGenome's multi-modal deep learning framework. We identified **7,037 variants** that could activate dormant AP1 sites, with **90.3% (n=6,357)** predicted to substantially increase AP1-family transcription factor binding. Strikingly, **91.1% of these activating variants are ultra-rare (AF < 0.01%)**. We constructed a two-dimensional "activation landscape" mapping population accessibility (X-axis) against functional impact (Y-axis), identifying **1,767 high-priority candidates** that are both population-accessible and functionally impactful. The predominant AP1-family transcription factors showing predicted binding gains were **FOS (25.8%)**, **JUND (15.8%)**, and **ATF3 (9.0%)**. A strong positive correlation between AP1 binding impact and enhancer mark activation (H3K27ac/H3K4me1; **r=0.579, p<10⁻⁴⁰**) validates that predicted TF binding gains correspond to functional enhancer activation. 
+
+**Critically, our analysis of selection reveals a nuanced picture:** Among variants observed in gnomAD (AF>0, n=6,588), there is a weak but significant positive correlation between rarity and impact (**Spearman r=0.056, p=5.8×10⁻⁶**), providing modest support for purifying selection. However, 449 variants that are **never observed** despite high sequencing coverage (AF=0) paradoxically show **lower** predicted AP1 impact than observed variants (mean 0.915 vs 0.962, p<10⁻¹⁴). This suggests that the AF=0 variants may reside in genomic contexts where AP1 site creation is non-functional, rather than being under the strongest selection. Overall, there is **no significant monotonic correlation** between allele frequency and AP1 impact across all variants (Spearman r=0.01, p=0.43), indicating that selection pressure on dormant AP1 site activation is weak or context-dependent.
 
 ---
 
@@ -68,8 +70,10 @@ This approach identified ~6.6 million AP1 motif-like sequences genome-wide.
 For each dormant site (Tiers 1-3), we computed the Hamming distance to the AP1 consensus and enumerated all minimal mutation paths (≤3 single nucleotide substitutions) required for activation. Each mutation step was characterized by:
 
 - Genomic coordinates (chromosome, position)
-- Reference and alternate alleles
+- Reference and alternate alleles (strand-corrected for minus-strand motifs)
 - Position within the motif
+
+**Critical Implementation Note:** For minus-strand motifs, reference and alternate alleles are reverse-complemented to genomic orientation to ensure proper matching with gnomAD VCF data. This strand-aware allele handling was validated by confirming balanced strand distributions in the final output (52.3% plus, 47.7% minus).
 
 This generated 18.1 million mutation steps across 6.3 million paths.
 
@@ -81,11 +85,11 @@ We queried gnomAD v4.1 genomes data (n=807,162 individuals) using bcftools to id
 - **Allele count (AC):** Number of observed alleles
 - **Allele number (AN):** Total alleles sequenced (coverage proxy)
 
-Variants not found in gnomAD (high coverage regions) were assigned AF=0, representing sites under potential purifying selection. We identified 7,158 unique variants matching mutation path steps.
+Variants not found in gnomAD (high coverage regions) were assigned AF=0, representing sites under potential purifying selection. We identified 7,037 unique variants matching mutation path steps.
 
 ### 2.4 Functional Impact Prediction (AlphaGenome)
 
-We scored all 7,158 variants using the AlphaGenome API with the recommended 19 variant scorers, generating predictions across 11 output modalities:
+We scored all 7,037 variants using the AlphaGenome API with the recommended 19 variant scorers, generating predictions across 11 output modalities:
 
 - **CHIP_TF:** Transcription factor binding (714 biosamples)
 - **CHIP_HISTONE:** Histone modifications (H3K27ac, H3K4me1, H3K4me3, etc.)
@@ -95,7 +99,7 @@ We scored all 7,158 variants using the AlphaGenome API with the recommended 19 v
 - **SPLICE_*:** Splicing predictions
 - **CONTACT_MAPS:** 3D chromatin interactions
 
-AlphaGenome successfully scored 6,810 variants (95.1% success rate), generating 186,695,928 individual predictions.
+AlphaGenome successfully scored 7,037 variants (100% success rate), generating 197,901,198 individual predictions.
 
 ### 2.5 AP1-Specific Y-Axis Design
 
@@ -148,26 +152,26 @@ All statistical analyses were performed in Python using scipy.stats. Correlation
 
 ### 3.1 Overview of Dormant AP1 Site Activation Variants
 
-We identified **6,810 unique genetic variants** from gnomAD v4.1 that map to mutation paths capable of activating dormant AP1 binding sites (Table 1). All variants had complete AlphaGenome predictions including AP1-family TF binding and enhancer histone marks.
+We identified **7,037 unique genetic variants** from gnomAD v4.1 that map to mutation paths capable of activating dormant AP1 binding sites (Table 1). All variants had complete AlphaGenome predictions including AP1-family TF binding and enhancer histone marks.
 
 **Table 1. Summary of Dormant AP1 Site Activation Variants**
 
 | Metric | Value |
 |--------|-------|
-| Total variants analyzed | 6,810 |
-| Variants with AP1-family TF predictions | 6,810 (100%) |
-| Variants with enhancer mark predictions | 6,810 (100%) |
-| Total AlphaGenome predictions | 186,695,928 |
-| AP1-family TF predictions | 926,160 |
-| Enhancer mark predictions | 7,164,120 |
+| Total variants analyzed | 7,037 |
+| Variants with AP1-family TF predictions | 7,037 (100%) |
+| Variants with enhancer mark predictions | 7,037 (100%) |
+| Total AlphaGenome predictions | 197,901,198 |
+| AP1-family TF predictions | 957,032 |
+| Enhancer mark predictions | 7,402,924 |
 
 ### 3.2 Mutational Distance to Activation
 
 The majority of dormant sites require multiple mutations to reach the AP1 consensus (Figure 1A). The Hamming distance distribution was:
 
 - **1 mutation:** 1 variant (0.0%)
-- **2 mutations:** 656 variants (9.6%)
-- **3 mutations:** 6,153 variants (90.4%)
+- **2 mutations:** 821 variants (11.7%)
+- **3 mutations:** 6,215 variants (88.3%)
 
 This indicates that most dormant sites are evolutionarily "buffered" from accidental activation by requiring multiple simultaneous mutations—a pattern consistent with purifying selection maintaining regulatory specificity.
 
@@ -179,12 +183,12 @@ Strikingly, the vast majority of AP1-activating variants are extremely rare in h
 
 | AF Category | Count | Percentage |
 |-------------|-------|------------|
-| Common (AF ≥ 1%) | 187 | 2.7% |
-| Low frequency (0.1-1%) | 228 | 3.3% |
-| Rare (0.01-0.1%) | 597 | 8.8% |
-| Ultra-rare (AF < 0.01%) | 5,798 | **85.1%** |
+| Common (AF ≥ 1%) | 129 | 1.8% |
+| Low frequency (0.1-1%) | 125 | 1.8% |
+| Rare (0.01-0.1%) | 369 | 5.2% |
+| Ultra-rare (AF < 0.01%) | 6,414 | **91.1%** |
 
-The extreme rarity of activating variants (85.1% ultra-rare) suggests strong **purifying selection** against mutations that would create novel AP1 binding sites. This is consistent with the hypothesis that uncontrolled TF binding site activation could have deleterious regulatory consequences.
+The extreme rarity of activating variants (91.1% ultra-rare) suggests strong **purifying selection** against mutations that would create novel AP1 binding sites. This is consistent with the hypothesis that uncontrolled TF binding site activation could have deleterious regulatory consequences.
 
 ### 3.4 AP1-Family TF Binding Impact
 
@@ -194,15 +198,15 @@ AlphaGenome predictions revealed that the overwhelming majority of variants subs
 
 | Metric | Value |
 |--------|-------|
-| Mean AP1 impact score | 0.958 |
-| Median AP1 impact score | 0.978 |
-| Standard deviation | 0.075 |
-| Range | 0.011 - 1.000 |
-| Variants >90th percentile | 6,170 (90.6%) |
-| Variants >95th percentile | 5,065 (74.4%) |
-| Variants >99th percentile | 2,286 (33.6%) |
+| Mean AP1 impact score | 0.959 |
+| Median AP1 impact score | 0.977 |
+| Standard deviation | 0.064 |
+| Range | 0.004 - 1.000 |
+| Variants >90th percentile | 6,357 (90.3%) |
+| Variants >95th percentile | 5,163 (73.4%) |
+| Variants >99th percentile | 2,292 (32.6%) |
 
-Remarkably, **90.6% of variants** showed AP1 binding impact in the top 10% of AlphaGenome's reference distribution. This validates that our mutation path approach successfully identifies variants with strong predicted effects on AP1 binding.
+Remarkably, **90.3% of variants** showed AP1 binding impact in the top 10% of AlphaGenome's reference distribution. This validates that our mutation path approach successfully identifies variants with strong predicted effects on AP1 binding.
 
 ### 3.5 AP1-Family TF Specificity
 
@@ -212,16 +216,16 @@ The dominant AP1-family transcription factors showing the strongest predicted bi
 
 | Transcription Factor | Count | Percentage |
 |----------------------|-------|------------|
-| FOS | 1,754 | 25.8% |
-| JUND | 1,141 | 16.8% |
-| ATF3 | 599 | 8.8% |
-| FOSL2 | 577 | 8.5% |
-| ATF2 | 551 | 8.1% |
-| FOSL1 | 521 | 7.7% |
-| JUNB | 450 | 6.6% |
-| JUN | 369 | 5.4% |
-| MAFK | 369 | 5.4% |
-| BATF | 177 | 2.6% |
+| FOS | 1,814 | 25.8% |
+| JUND | 1,111 | 15.8% |
+| ATF3 | 631 | 9.0% |
+| FOSL2 | 556 | 7.9% |
+| FOSL1 | 514 | 7.3% |
+| ATF2 | 511 | 7.3% |
+| MAFK | 472 | 6.7% |
+| JUNB | 412 | 5.9% |
+| JUN | 379 | 5.4% |
+| BATF | 235 | 3.3% |
 
 FOS showed the strongest response, consistent with its role as a primary AP1 component. The diversity of responding TFs (all major FOS/JUN/ATF family members) confirms that our dormant sites are bona fide AP1 consensus-adjacent sequences.
 
@@ -233,16 +237,16 @@ Predicted AP1 binding gains showed strong cell-type specificity (Figure 2C):
 
 | Cell Type | Count | Percentage |
 |-----------|-------|------------|
-| Endothelial cell (HUVEC) | 1,071 | 15.7% |
-| MCF-7 (breast cancer) | 902 | 13.2% |
-| HepG2 (hepatocytes) | 822 | 12.1% |
-| T47D (breast cancer) | 729 | 10.7% |
-| GM12878 (lymphoblastoid) | 641 | 9.4% |
-| K562 (leukemia) | 569 | 8.4% |
-| A549 (lung cancer) | 382 | 5.6% |
-| SK-N-SH (neuroblastoma) | 351 | 5.2% |
-| H1 (embryonic stem cells) | 281 | 4.1% |
-| Liver | 206 | 3.0% |
+| MCF-7 (breast cancer) | 1,052 | 14.9% |
+| Endothelial cell (HUVEC) | 983 | 14.0% |
+| HepG2 (hepatocytes) | 806 | 11.5% |
+| K562 (leukemia) | 759 | 10.8% |
+| GM12878 (lymphoblastoid) | 738 | 10.5% |
+| T47D (breast cancer) | 667 | 9.5% |
+| A549 (lung cancer) | 418 | 5.9% |
+| H1 (embryonic stem cells) | 350 | 5.0% |
+| SK-N-SH (neuroblastoma) | 296 | 4.2% |
+| Liver | 179 | 2.5% |
 
 The prominence of cancer cell lines (MCF-7, HepG2, K562, T47D, A549) is notable and may reflect the extensive ChIP-seq data available for these lines, or could indicate that AP1 binding sites are particularly dynamic in transformed cells.
 
@@ -254,12 +258,12 @@ We constructed a two-dimensional activation landscape with population accessibil
 
 | Quadrant | Count | Percentage |
 |----------|-------|------------|
-| **HIGH PRIORITY: Accessible + High Impact** | 1,624 | 23.8% |
-| High Impact, Hard to Access | 1,779 | 26.1% |
-| Accessible, Low Impact | 1,781 | 26.2% |
-| Low Priority | 1,626 | 23.9% |
+| **HIGH PRIORITY: Accessible + High Impact** | 1,767 | 25.1% |
+| High Impact, Hard to Access | 1,733 | 24.6% |
+| Accessible, Low Impact | 1,751 | 24.9% |
+| Low Priority | 1,786 | 25.4% |
 
-The **1,624 high-priority candidates** (23.8%) represent dormant AP1 sites that are:
+The **1,767 high-priority candidates** (25.1%) represent dormant AP1 sites that are:
 1. Relatively accessible through existing human variation
 2. Predicted to have substantial functional impact upon activation
 
@@ -271,30 +275,40 @@ The high-priority quadrant showed distinctive characteristics:
 
 | Metric | Value |
 |--------|-------|
-| Total candidates | 1,624 |
+| Total candidates | 1,767 |
 | Mean AP1 impact score | 0.992 |
-| Mean allele frequency | 1.01% |
-| Common variants (AF ≥ 1%) | 82 |
+| Mean allele frequency | 0.64% |
+| Common variants (AF ≥ 1%) | 62 |
 | Single-step variants (H=1) | 1 |
 
-The elevated mean AF (1.01% vs 0.39% overall) indicates that high-priority candidates are enriched for more common variants, consistent with their "accessible" classification.
+The elevated mean AF (0.64% vs 0.44% overall) indicates that high-priority candidates are enriched for more common variants, consistent with their "accessible" classification.
 
 ### 3.9 Validation: AP1 Binding Correlates with Enhancer Activation
 
 To validate that predicted AP1 binding gains correspond to functional enhancer activation, we correlated AP1 impact scores with enhancer histone mark predictions (H3K27ac/H3K4me1) (Figure 4).
 
 **Correlation Analysis:**
-- **AP1 impact vs Enhancer impact:** r = 0.545, p < 10⁻¹⁶
+- **AP1 impact vs Enhancer impact:** r = 0.579, p < 10⁻⁴⁰
 
 This strong positive correlation demonstrates that variants predicted to increase AP1 binding are also predicted to increase active enhancer marks, supporting a mechanistic model where AP1 binding drives enhancer activation.
 
-### 3.10 Evidence for Purifying Selection
+### 3.10 Selection Analysis
 
-We observed a weak but significant negative correlation between variant rarity and AP1 impact:
+We examined whether variants with higher predicted AP1 impact are under stronger purifying selection (i.e., rarer in the population).
 
-- **-log₁₀(AF) vs AP1 impact:** r = -0.049, p = 5.99 × 10⁻⁵
+**Table 8. Selection Analysis Summary**
 
-While the effect size is modest, the direction is consistent with purifying selection: variants with higher predicted functional impact tend to be rarer in the population, suggesting they are selected against.
+| Analysis | Statistic | p-value | Interpretation |
+|----------|-----------|---------|----------------|
+| All variants: Spearman(rarity, impact) | r = 0.01 | 0.43 | No significant correlation |
+| Observed variants only (AF>0): Spearman | r = 0.056 | 5.8×10⁻⁶ | Weak positive (supports selection) |
+| AF=0 vs AF>0: Mann-Whitney U | - | 9.3×10⁻¹⁵ | AF=0 has lower impact (paradoxical) |
+
+**Key Finding:** Among variants observed in gnomAD (AF>0, n=6,588), there is a weak but statistically significant positive correlation between rarity and AP1 impact (Spearman r=0.056, p=5.8×10⁻⁶), providing modest support for purifying selection against high-impact variants.
+
+However, the 449 variants never observed in gnomAD (AF=0) show paradoxically **lower** mean AP1 impact (0.915) compared to observed variants (0.962). Both values represent very strong predicted effects (91st and 96th percentile, respectively), but this pattern suggests the AF=0 variants may reside in genomic contexts where AP1 cannot function effectively, rather than being under the strongest negative selection.
+
+**Interpretation:** The selection signal is weak and context-dependent. The primary finding is that **all identified variants show strong AP1 activation potential**, regardless of allele frequency.
 
 ---
 
@@ -304,21 +318,23 @@ While the effect size is modest, the direction is consistent with purifying sele
 
 This study provides the first comprehensive analysis of dormant AP1 transcription factor binding sites accessible through human population variation. Our key findings are:
 
-1. **Dormant sites are abundant but buffered:** 90.4% of activating variants require 3 mutations, indicating evolutionary buffering against accidental activation.
+1. **Dormant site activation is computationally tractable:** We successfully identified 7,037 variants from gnomAD that could activate dormant AP1 sites through 1-3 mutations.
 
-2. **Strong constraint on activation:** 85.1% of activating variants are ultra-rare (AF < 0.01%), suggesting purifying selection against novel AP1 site creation.
+2. **AlphaGenome confirms functional potential:** 90.3% of identified variants are predicted to substantially increase AP1-family TF binding (>90th percentile). This validates that our mutation path approach identifies biologically meaningful activating variants.
 
-3. **High predicted functional impact:** 90.6% of variants substantially increase predicted AP1-family TF binding (>90th percentile).
+3. **Strong AP1 impact across all frequency classes:** Both observed (AF>0) and never-observed (AF=0) variants show very high predicted AP1 binding impact (96th and 91st percentile, respectively), indicating the pipeline successfully identifies functional dormant sites.
 
-4. **Validation through enhancer marks:** Strong correlation (r = 0.545) between AP1 binding gains and enhancer activation (H3K27ac/H3K4me1).
+4. **Validation through enhancer marks:** Strong correlation (r = 0.579) between AP1 binding gains and enhancer activation (H3K27ac/H3K4me1) confirms that predicted TF binding corresponds to broader enhancer function.
 
-5. **1,624 high-priority candidates:** Accessible variants with high functional impact represent targets for further investigation.
+5. **Weak evidence for purifying selection:** Among observed variants, there is a modest positive correlation (r = 0.056) between rarity and impact, providing limited support for selection against high-impact variants. However, the effect explains <1% of variance.
+
+6. **1,767 high-priority candidates:** Accessible variants with high functional impact represent targets for further investigation.
 
 ### 4.2 Biological Implications
 
 #### 4.2.1 Regulatory Evolution
 
-Our findings illuminate the evolutionary dynamics of TF binding site gain-of-function. The extreme rarity of activating variants suggests that the regulatory genome is under strong constraint to prevent spurious TF binding. The requirement for multiple mutations (Hamming distance = 3 for 90% of sites) provides an additional buffer.
+Our findings illuminate the evolutionary dynamics of TF binding site gain-of-function. The extreme rarity of activating variants suggests that the regulatory genome is under strong constraint to prevent spurious TF binding. The requirement for multiple mutations (Hamming distance = 3 for 88% of sites) provides an additional buffer.
 
 #### 4.2.2 Disease Mechanisms
 
@@ -335,17 +351,21 @@ The strong correlation between AP1 binding and enhancer activation supports AP1'
 
 ### 4.3 Methodological Innovations
 
-#### 4.3.1 Biologically-Specific Y-Axis
+#### 4.3.1 Strand-Aware Allele Handling
+
+A critical methodological advance was the implementation of strand-aware allele conversion. For motifs on the minus strand, reference and alternate alleles must be reverse-complemented to match genomic VCF coordinates. This correction was validated by achieving balanced strand ratios (52.3%/47.7%) in the final output.
+
+#### 4.3.2 Biologically-Specific Y-Axis
 
 Unlike previous approaches that use generic maximum scores across all functional predictions, we designed our Y-axis to specifically measure AP1-family TF binding. This provides direct biological interpretability: a high Y-score means the variant is predicted to increase binding of the exact TF family under study.
 
-#### 4.3.2 Population Accessibility Score
+#### 4.3.3 Population Accessibility Score
 
 Our X-axis formula (X = -log₁₀(AF) × Hamming_distance) elegantly captures the joint probability of accessing a dormant site through population variation: rare variants AND multiple mutations compound the difficulty of activation.
 
-#### 4.3.3 Vectorized Computation
+#### 4.3.4 Vectorized Computation
 
-Our implementation uses vectorized pandas groupby operations to process 186 million predictions in ~30 seconds, enabling rapid iteration and analysis.
+Our implementation uses vectorized pandas groupby operations to process 197 million predictions in ~30 seconds, enabling rapid iteration and analysis.
 
 ### 4.4 Limitations
 
@@ -373,23 +393,24 @@ Our implementation uses vectorized pandas groupby operations to process 186 mill
 
 ## 5. Conclusions
 
-We present the first systematic characterization of dormant AP1 binding sites accessible through human population variation. Our analysis of 6,810 variants reveals that:
+We present the first systematic characterization of dormant AP1 binding sites accessible through human population variation. Our analysis of 7,037 variants reveals that:
 
-- The vast majority (85.1%) are extremely rare, suggesting purifying selection against AP1 site activation
-- Nearly all (90.6%) have high predicted functional impact on AP1-family TF binding
-- 1,624 variants represent high-priority candidates: accessible AND impactful
+- **The pipeline successfully identifies functional dormant sites:** 90.3% of variants show strong predicted AP1 binding activation (>90th percentile)
+- **AlphaGenome validates the approach:** Strong correlation (r = 0.579) between AP1 binding and enhancer marks confirms biological relevance
+- **1,767 high-priority candidates** combine population accessibility with high functional impact
+- **Selection signal is weak but present:** Among observed variants, rarer ones tend to have slightly higher impact (r = 0.056), providing modest support for purifying selection
 
-The strong correlation between AP1 binding gains and enhancer activation validates our approach and supports a model where dormant site activation could create functional regulatory elements. These findings have implications for understanding regulatory evolution, disease mechanisms, and the functional interpretation of rare non-coding variation.
+The key contribution is demonstrating that dormant TF binding sites can be systematically identified and their activation potential quantified using deep learning predictions. This framework can be extended to other TF families and integrated with disease variant databases to identify regulatory mechanisms of rare non-coding variation.
 
 ---
 
 ## 6. Figures
 
-### Figure 1. High-Priority Dormant AP1 Site Candidates
+### Figure 1. Mutational Distance and Allele Frequency Distribution
 
 ![High-Priority Candidates](../figures/landscape/AP1_high_priority_candidates.png)
 
-**Figure 1.** Characterization of the 1,624 high-priority dormant AP1 site candidates. **(A)** Scatter plot of high-priority candidates showing AP1 impact score (Y-axis) versus accessibility score (X-axis), colored by allele frequency (blue=common, red=rare). Points cluster at Y>0.97, indicating consistently high predicted AP1 binding gains. **(B)** Histogram of log₁₀(allele frequency) distribution. Dashed lines indicate 1% MAF (red) and 0.1% MAF (orange) thresholds. The majority of variants are ultra-rare (AF < 0.01%). **(C)** Bar chart of Hamming distance (mutations required). Most high-priority candidates require 3 mutations (n≈1,250), with fewer requiring only 2 mutations (n≈350). **(D)** Table of top 10 high-priority candidates ranked by AP1 score, showing variant coordinates, AP1 score (all 1.000), best-responding TF (JUNB, JUN, FOSL1, FOSL2, BATF), allele frequency, and mutation steps required.
+**Figure 1.** (A) Distribution of Hamming distance to AP1 consensus. The majority of dormant sites require 3 mutations for activation. (B) Allele frequency distribution shows 91.1% of variants are ultra-rare (AF < 0.01%), suggesting purifying selection. (C) High-priority candidates are enriched for more accessible variants. (D) Top 10 high-priority candidates with variant details.
 
 ---
 
@@ -397,7 +418,7 @@ The strong correlation between AP1 binding gains and enhancer activation validat
 
 ![TF Breakdown](../figures/landscape/AP1_tf_breakdown.png)
 
-**Figure 2.** Distribution of AP1-family transcription factor binding predictions across 6,810 variants. **(A)** Horizontal bar chart showing the number of variants for which each AP1-family TF showed the strongest predicted binding gain. FOS dominates with 1,754 variants (25.8%), followed by JUND (1,141, 16.8%), ATF3 (599, 8.8%), FOSL2 (577), ATF2 (551), FOSL1 (521), JUNB (450), JUN (369), MAFK (369), BATF (177), ATF7 (107), MAFG (97), BATF2 (80), and MAFF (18). **(B)** Box plots showing the distribution of maximum AP1 quantile scores for the 8 most frequent TFs. Median scores are consistently >0.9 for all TFs, with FOS and JUND showing slightly broader distributions due to their higher variant counts. Outliers (circles) represent the minority of variants with lower predicted impact.
+**Figure 2.** Distribution of best-responding AP1-family transcription factors. FOS (25.8%) and JUND (15.8%) dominate the response, with contributions from all major family members (ATF3, FOSL2, ATF2, FOSL1, MAFK, JUNB, JUN, BATF).
 
 ---
 
@@ -405,7 +426,7 @@ The strong correlation between AP1 binding gains and enhancer activation validat
 
 ![Main Landscape](../figures/landscape/AP1_activation_landscape_main.png)
 
-**Figure 3.** Two-dimensional activation landscape of dormant AP1 binding sites. The X-axis represents population accessibility score (-log₁₀(AF) × Hamming distance), where higher values indicate harder-to-access variants (rare and/or requiring more mutations). The Y-axis represents AP1-family TF binding impact (maximum quantile score across 14 AP1-family TFs). Each point is one variant (n=6,810), colored by log₁₀(allele frequency): blue = common variants (AF≈10⁻²), yellow-green = intermediate (AF≈10⁻⁴ to 10⁻⁵), red-purple = ultra-rare (AF≈10⁻⁸ to 10⁻¹⁰). The green shaded region indicates the HIGH PRIORITY quadrant (X < median, Y > median threshold of 0.978). Dashed horizontal line at Y=0.978 marks the 90th percentile AP1 impact threshold. Dashed vertical line at X≈14 marks the median accessibility score. Annotation box shows n=6,810 total variants with 1,624 (23.8%) in the high-priority quadrant. The strong vertical clustering at high Y-values (>0.9) demonstrates that the majority of dormant site activation variants are predicted to substantially increase AP1 binding.
+**Figure 3.** Two-dimensional activation landscape mapping population accessibility (X-axis: -log₁₀(AF) × Hamming distance) versus functional impact (Y-axis: max AP1-family TF quantile score). Points are colored by allele frequency (blue = common, red = rare). Green shaded region indicates HIGH PRIORITY quadrant (n = 1,767 variants). Dashed lines indicate median X and Y values.
 
 ---
 
@@ -413,14 +434,13 @@ The strong correlation between AP1 binding gains and enhancer activation validat
 
 ![Comparison Panels](../figures/landscape/AP1_activation_landscape_comparison.png)
 
-**Figure 4.** Multi-modal validation of the activation landscape approach. **(A) PRIMARY: AP1-Family TF Binding** - Our biologically-specific Y-axis using only JUND, JUN, FOS, FOSL1/2, ATF3, and BATF predictions. Color scale shows quantile score (0.2-1.0). Most variants cluster at high Y-values (>0.8). **(B) COMPARISON: Global Max (All Tracks)** - Alternative Y-axis using maximum across all AlphaGenome outputs. While the pattern appears similar, this metric is less biologically interpretable as it may be driven by unrelated signals (e.g., CTCF, splice sites). Note the compressed Y-axis range (0.94-1.00) indicating ceiling effects. **(C) VALIDATION: Enhancer Marks (H3K27ac, H3K4me1)** - Secondary Y-axis using maximum quantile score across active enhancer histone marks. The similar landscape pattern supports functional relevance: variants that increase AP1 binding also increase enhancer marks. **(D) CONCORDANCE: AP1 vs Enhancer** - Direct correlation between AP1-family TF impact (X-axis) and enhancer mark impact (Y-axis) for each variant. Strong positive correlation (r=0.545, p<10⁻¹⁶, shown in inset) validates that predicted AP1 binding gains correspond to predicted enhancer activation. Color scale shows accessibility score. Points along the diagonal demonstrate concordant predictions across modalities.
+**Figure 4.** Multi-panel comparison of activation landscape approaches. (A) PRIMARY: AP1-family TF binding, our biologically-specific Y-axis. (B) COMPARISON: Global maximum across all tracks (less specific). (C) VALIDATION: Enhancer histone marks (H3K27ac, H3K4me1) show similar patterns. (D) CONCORDANCE: Strong correlation (r = 0.579) between AP1 impact and enhancer activation validates the biological relevance of predicted binding gains.
 
 ---
 
 ## 7. Data Availability
 
 All data and code are available at:
-- **GitHub:** https://github.com/gsstephenson/alphagenome-enhancer-stacking
 - **Results:** `results/landscape/AP1/`
 - **Figures:** `figures/landscape/`
 
@@ -428,8 +448,8 @@ All data and code are available at:
 
 | File | Description |
 |------|-------------|
-| `AP1_activation_landscape.tsv` | Complete landscape data (6,810 variants) |
-| `AP1_high_priority_candidates.tsv` | High-priority quadrant (1,624 variants) |
+| `AP1_activation_landscape.tsv` | Complete landscape data (7,037 variants) |
+| `AP1_high_priority_candidates.tsv` | High-priority quadrant (1,767 variants) |
 | `AP1_landscape_summary.txt` | Summary statistics |
 
 ---
@@ -475,7 +495,15 @@ We thank the gnomAD consortium for making population genetic data publicly avail
 | MAFF | Small Maf | AP1-like binding |
 | MAFG | Small Maf | AP1-like binding |
 
-### Supplementary Table S2. AlphaGenome Output Types
+### Supplementary Table S2. Pipeline Bug Fixes Applied
+
+| Bug | Description | Fix |
+|-----|-------------|-----|
+| Strand-aware alleles | Minus-strand motifs had ref/alt in motif orientation | reverse_complement() applied for minus strand |
+| VCF '.' handling | gnomAD '.' for missing data caused pandas errors | `.replace('.', pd.NA).fillna(0.0)` pattern |
+| Variant ID matching | Used wrong columns (pos/ref/alt) instead of (genomic_position/ref_base/alt_base) | Fixed column names in Module 05 |
+
+### Supplementary Table S3. AlphaGenome Output Types
 
 | Output Type | Predictions | Description |
 |-------------|-------------|-------------|
@@ -493,4 +521,5 @@ We thank the gnomAD consortium for making population genetic data publicly avail
 
 ---
 
-*Manuscript prepared: November 27, 2025*
+*Manuscript prepared: November 28, 2025*
+*Pipeline corrected and results updated: November 28, 2025*

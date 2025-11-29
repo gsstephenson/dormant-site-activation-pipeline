@@ -91,7 +91,16 @@ def load_alphagenome_predictions(parquet_path: Path) -> pd.DataFrame:
 def load_gnomad_metadata(gnomad_path: Path) -> pd.DataFrame:
     """Load gnomAD intersection data with path/step information."""
     logger.info(f"Loading gnomAD data from {gnomad_path}")
-    df = pd.read_csv(gnomad_path, sep='\t')
+    df = pd.read_csv(gnomad_path, sep='\t', low_memory=False)
+    
+    # Handle VCF "." notation for missing values
+    # bcftools outputs "." for missing INFO fields, which causes pandas to read as object type
+    numeric_cols = ['AF', 'AC', 'AN', 'nhomalt']
+    for col in numeric_cols:
+        if col in df.columns:
+            df[col] = df[col].replace('.', pd.NA)
+            df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0.0)
+    
     logger.info(f"Loaded {len(df):,} variant-path combinations")
     return df
 
@@ -272,10 +281,11 @@ def compute_x_axis_accessibility(
     gnomad_data = gnomad_data.copy()
     
     # Create variant_id matching format used in AlphaGenome predictions
-    # gnomAD format: chr1:867861:A:C
+    # Use genomic_position, ref_base, alt_base (our path coordinates)
+    # NOT pos, ref, alt (which come from VCF matching and have NaN for non-matches)
     # AlphaGenome format: chr1:867861:A>C
     gnomad_data['variant_id_str'] = gnomad_data.apply(
-        lambda row: f"{row['chr']}:{row['pos']}:{row['ref']}>{row['alt']}", axis=1
+        lambda row: f"{row['chr']}:{row['genomic_position']}:{row['ref_base']}>{row['alt_base']}", axis=1
     )
     
     logger.info(f"  gnomAD variants: {gnomad_data['variant_id_str'].nunique():,}")

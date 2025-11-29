@@ -18,6 +18,29 @@ from utils.io import load_config
 from utils.logging_utils import setup_logger, log_step, log_parameters, ProgressLogger
 
 
+def reverse_complement(base: str) -> str:
+    """
+    Return the reverse complement of a single nucleotide base.
+    
+    For minus-strand motifs, the ref/alt bases are in motif orientation
+    (5'->3' on the minus strand). To match VCF format (always plus strand),
+    we need to reverse complement.
+    
+    Parameters
+    ----------
+    base : str
+        Single nucleotide (A, T, G, or C)
+        
+    Returns
+    -------
+    str
+        Reverse complement base
+    """
+    complement = {'A': 'T', 'T': 'A', 'G': 'C', 'C': 'G',
+                  'a': 't', 't': 'a', 'g': 'c', 'c': 'g'}
+    return complement.get(base, base)
+
+
 def generate_mutation_paths(
     site_seq: str,
     consensus: str,
@@ -153,6 +176,16 @@ def enumerate_all_paths(
         # Store each path
         for path_num, path in enumerate(paths):
             for step_num, step in enumerate(path):
+                # For minus-strand motifs, convert ref/alt to genomic (plus strand) orientation
+                # VCF format always uses plus strand reference, so we need to reverse complement
+                # the bases when the motif is on the minus strand
+                if row['strand'] == '-':
+                    ref_genomic = reverse_complement(step['ref'])
+                    alt_genomic = reverse_complement(step['alt'])
+                else:
+                    ref_genomic = step['ref']
+                    alt_genomic = step['alt']
+                
                 path_record = {
                     'site_id': idx,
                     'chr': row['chr'],
@@ -168,8 +201,10 @@ def enumerate_all_paths(
                     'total_steps': len(path),
                     'position_in_motif': step['position'],
                     'genomic_position': row['start'] + step['position'] if row['strand'] == '+' else row['stop'] - step['position'] - 1,
-                    'ref_base': step['ref'],
-                    'alt_base': step['alt'],
+                    'ref_base': ref_genomic,        # Genomic orientation (plus strand)
+                    'alt_base': alt_genomic,        # Genomic orientation (plus strand)
+                    'ref_base_motif': step['ref'],  # Original motif orientation (for reference)
+                    'alt_base_motif': step['alt'],  # Original motif orientation (for reference)
                     'seq_before': step['seq_before'],
                     'seq_after': step['seq_after']
                 }

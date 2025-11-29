@@ -22,6 +22,14 @@ def main():
     df = pd.read_csv(input_path, sep='\t', low_memory=False)
     print(f"Total mutation steps: {len(df):,}")
     
+    # Handle VCF "." notation for missing values
+    # bcftools outputs "." for missing INFO fields, which causes pandas to read as object type
+    numeric_cols = ['AF', 'AC', 'AN', 'nhomalt']
+    for col in numeric_cols:
+        if col in df.columns:
+            df[col] = df[col].replace('.', pd.NA)
+            df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0.0)
+    
     # Report on coverage confidence metrics
     if 'is_missing' in df.columns and 'coverage_confidence' in df.columns:
         num_missing = df['is_missing'].sum()

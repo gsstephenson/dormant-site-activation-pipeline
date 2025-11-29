@@ -18,8 +18,12 @@ results/landscape/
 results/population_stats/
 results/validation/
 
-# Figures (generated)
-figures/
+# Figures (keep key visualizations, ignore temporary)
+# figures/  # Actually track figures - they're key outputs
+
+# ClinVar/GWAS data (Module 06 was deleted)
+data/clinvar/
+data/gwas/
 
 # Logs (can be large)
 logs/

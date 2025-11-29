@@ -78,7 +78,8 @@ def plot_main_landscape(
         return
     
     # Color by allele frequency (common = blue, rare = red)
-    af_colors = np.log10(plot_data['AF_final'].clip(lower=1e-10))
+    # Clip to -6 to 0 range for better color visibility (data mostly in -2 to -6 range)
+    af_colors = np.log10(plot_data['AF_final'].clip(lower=1e-6))
     
     # Main scatter plot
     scatter = ax.scatter(
@@ -88,8 +89,17 @@ def plot_main_landscape(
         cmap='RdYlBu',  # Red (rare) to Blue (common)
         alpha=0.6,
         s=15,
-        edgecolors='none'
+        edgecolors='none',
+        vmin=-6,
+        vmax=0
     )
+    
+    # Force Y-axis to show FULL 0-1 scale (critical for interpretation!)
+    ax.set_ylim(0, 1.05)
+    
+    # Add reference line at 90th percentile
+    ax.axhline(y=0.9, color='green', linestyle=':', linewidth=1, alpha=0.7)
+    ax.text(ax.get_xlim()[0] + 0.5, 0.91, '90th percentile', fontsize=8, color='green')
     
     # Add colorbar
     cbar = plt.colorbar(scatter, ax=ax, label='log₁₀(Allele Frequency)', shrink=0.8)
@@ -182,35 +192,41 @@ def plot_comparison_panels(
     # Panel A: AP1-specific (PRIMARY - our approach)
     ax = axes[0, 0]
     y = plot_data['y_ap1_impact']
-    scatter = ax.scatter(x, y, c=y, cmap='Reds', alpha=0.5, s=10)
+    scatter = ax.scatter(x, y, c=y, cmap='Reds', alpha=0.5, s=10, vmin=0, vmax=1)
     ax.set_xlabel('Accessibility Score')
     ax.set_ylabel('AP1-Family TF Impact')
     ax.set_title('A) PRIMARY: AP1-Family TF Binding\n(JUND, JUN, FOS, FOSL1/2, ATF3, BATF)', fontweight='bold')
+    ax.set_ylim(0, 1.05)  # Full 0-1 scale for interpretability
     plt.colorbar(scatter, ax=ax, label='Quantile Score')
     
-    # Add quadrant lines
+    # Add 90th percentile reference line and quadrant lines
+    ax.axhline(y=0.9, color='green', linestyle=':', linewidth=1, alpha=0.7)
     ax.axhline(y=y.median(), color='gray', linestyle='--', alpha=0.5)
     ax.axvline(x=x.median(), color='gray', linestyle='--', alpha=0.5)
     
     # Panel B: Global max (for comparison)
     ax = axes[0, 1]
     y_global = plot_data['global_max_score']
-    scatter = ax.scatter(x, y_global, c=y_global, cmap='Purples', alpha=0.5, s=10)
+    scatter = ax.scatter(x, y_global, c=y_global, cmap='Purples', alpha=0.5, s=10, vmin=0, vmax=1)
     ax.set_xlabel('Accessibility Score')
     ax.set_ylabel('Global Max Impact')
     ax.set_title('B) COMPARISON: Global Max (All Tracks)\n(Less biologically specific)', fontweight='bold', color='gray')
+    ax.set_ylim(0, 1.05)  # Full 0-1 scale for fair comparison
     plt.colorbar(scatter, ax=ax, label='Quantile Score')
+    ax.axhline(y=0.9, color='green', linestyle=':', linewidth=1, alpha=0.7)
     ax.axhline(y=y_global.median(), color='gray', linestyle='--', alpha=0.5)
     ax.axvline(x=x.median(), color='gray', linestyle='--', alpha=0.5)
     
     # Panel C: Enhancer marks validation
     ax = axes[1, 0]
     y_enhancer = plot_data['enhancer_max_score'].fillna(0)
-    scatter = ax.scatter(x, y_enhancer, c=y_enhancer, cmap='Greens', alpha=0.5, s=10)
+    scatter = ax.scatter(x, y_enhancer, c=y_enhancer, cmap='Greens', alpha=0.5, s=10, vmin=0, vmax=1)
     ax.set_xlabel('Accessibility Score')
     ax.set_ylabel('Enhancer Mark Impact')
     ax.set_title('C) VALIDATION: Enhancer Marks\n(H3K27ac, H3K4me1)', fontweight='bold')
+    ax.set_ylim(0, 1.05)  # Full 0-1 scale for consistency
     plt.colorbar(scatter, ax=ax, label='Quantile Score')
+    ax.axhline(y=0.9, color='green', linestyle=':', linewidth=1, alpha=0.7)
     ax.axhline(y=y_enhancer.median(), color='gray', linestyle='--', alpha=0.5)
     ax.axvline(x=x.median(), color='gray', linestyle='--', alpha=0.5)
     
@@ -236,10 +252,11 @@ def plot_comparison_panels(
                 bbox=dict(boxstyle='round', facecolor='white', alpha=0.8))
         
         # Add diagonal reference
-        lims = [min(ax.get_xlim()[0], ax.get_ylim()[0]),
-                max(ax.get_xlim()[1], ax.get_ylim()[1])]
-        ax.plot(lims, lims, 'k--', alpha=0.3, label='y=x')
+        ax.plot([0, 1], [0, 1], 'k--', alpha=0.3, label='y=x')
     
+    # Full 0-1 scale on both axes for consistency
+    ax.set_xlim(0, 1.05)
+    ax.set_ylim(0, 1.05)
     ax.set_xlabel('AP1-Family TF Impact')
     ax.set_ylabel('Enhancer Mark Impact')
     ax.set_title('D) CONCORDANCE: AP1 vs Enhancer\n(Validates functional activation)', fontweight='bold')
@@ -289,6 +306,8 @@ def plot_tf_breakdown(data: pd.DataFrame, output_path: Path):
     ax.set_xticks(positions)
     ax.set_xticklabels(tfs_to_plot, rotation=45, ha='right')
     ax.set_ylabel('AP1 Max Quantile Score')
+    ax.set_ylim(0, 1.05)  # Full 0-1 scale for proper interpretation
+    ax.axhline(y=0.9, color='green', linestyle=':', linewidth=1, alpha=0.7)
     ax.set_title('B) Score Distribution by TF', fontweight='bold')
     
     plt.suptitle('AP1-Family Transcription Factor Analysis', fontsize=12, fontweight='bold')
@@ -317,9 +336,9 @@ def plot_high_priority_detail(data: pd.DataFrame, output_path: Path):
     
     fig, axes = plt.subplots(2, 2, figsize=(12, 10))
     
-    # Panel A: Zoom on high-priority quadrant
+    # Panel A: Zoom on high-priority quadrant - USE FULL 0-1 SCALE
     ax = axes[0, 0]
-    ax.scatter(
+    scatter = ax.scatter(
         high_priority['x_accessibility'],
         high_priority['y_ap1_impact'],
         c=high_priority['AF_final'].apply(lambda x: np.log10(max(x, 1e-10))),
@@ -329,15 +348,20 @@ def plot_high_priority_detail(data: pd.DataFrame, output_path: Path):
     )
     ax.set_xlabel('Accessibility Score')
     ax.set_ylabel('AP1 Impact Score')
+    ax.set_ylim(0, 1.05)  # Full 0-1 scale to show how impressive these scores are
     ax.set_title(f'A) High-Priority Candidates (n={len(high_priority):,})', fontweight='bold')
     
-    # Panel B: AF distribution of high-priority
+    # Add annotation showing where the data actually is
+    ax.axhline(y=0.9, color='green', linestyle='--', alpha=0.5, linewidth=1)
+    ax.text(ax.get_xlim()[1] * 0.95, 0.91, '90th %ile', ha='right', fontsize=8, color='green')
+    
+    # Panel B: AF distribution of high-priority - use -log10(AF) so higher = rarer
     ax = axes[0, 1]
-    af_log = np.log10(high_priority['AF_final'].clip(lower=1e-10))
-    ax.hist(af_log, bins=50, color='steelblue', edgecolor='white', alpha=0.7)
-    ax.axvline(x=np.log10(0.01), color='red', linestyle='--', label='1% MAF')
-    ax.axvline(x=np.log10(0.001), color='orange', linestyle='--', label='0.1% MAF')
-    ax.set_xlabel('log₁₀(Allele Frequency)')
+    af_neg_log = -np.log10(high_priority['AF_final'].clip(lower=1e-10))
+    ax.hist(af_neg_log, bins=50, color='steelblue', edgecolor='white', alpha=0.7)
+    ax.axvline(x=-np.log10(0.01), color='red', linestyle='--', label='1% MAF')
+    ax.axvline(x=-np.log10(0.001), color='orange', linestyle='--', label='0.1% MAF')
+    ax.set_xlabel('-log₁₀(Allele Frequency)\n← Common | Rare →')
     ax.set_ylabel('Count')
     ax.set_title('B) AF Distribution of High-Priority Variants', fontweight='bold')
     ax.legend()

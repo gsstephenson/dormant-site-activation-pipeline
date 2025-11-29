@@ -277,6 +277,14 @@ def match_paths_to_gnomad(
     gnomad_df = pd.read_csv(gnomad_file, sep='\t', low_memory=False)
     logger.info(f"    {len(gnomad_df):,} variants")
     
+    # Handle VCF "." notation for missing values in gnomAD output
+    # bcftools outputs "." for missing INFO fields
+    numeric_cols = ['AF', 'AC', 'AN', 'nhomalt']
+    for col in numeric_cols:
+        if col in gnomad_df.columns:
+            gnomad_df[col] = gnomad_df[col].replace('.', pd.NA)
+            gnomad_df[col] = pd.to_numeric(gnomad_df[col], errors='coerce')
+    
     # CRITICAL: Ensure chromosome naming matches between paths and gnomAD
     # Paths use "1", gnomAD uses "chr1"
     first_chr = str(paths_df['chr'].iloc[0])
@@ -370,6 +378,17 @@ def summarize_paths_af(
     
     # Load matched data
     df = pd.read_csv(matched_file, sep='\t', low_memory=False)
+    
+    # Convert numeric columns - handle VCF "." notation for missing values
+    # VCF format uses "." for missing data, which causes pandas to read as object type
+    numeric_cols = ['AF', 'AC', 'AN', 'nhomalt']
+    for col in numeric_cols:
+        if col in df.columns:
+            # Replace VCF "." with NaN, then convert to numeric
+            df[col] = df[col].replace('.', pd.NA)
+            df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0.0)
+    
+    logger.info(f"  Converted {len(numeric_cols)} columns to numeric (handled VCF '.' notation)")
     
     # Group by path_id
     logger.info("  Aggregating by path_id...")

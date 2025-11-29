@@ -11,19 +11,19 @@ to the dormant AP1 site activation hypothesis.
 
 SUMMARY STATISTICS:
 ----------------------------------------
-total_variants: 6810
-variants_with_ap1_data: 6810
-variants_with_enhancer_data: 6810
-high_priority_count: 1624
-common_variants: 187
+total_variants: 7037
+variants_with_ap1_data: 7037
+variants_with_enhancer_data: 7037
+high_priority_count: 1767
+common_variants: 129
 single_step_variants: 1
-strong_ap1_gain: 6170
-strong_enhancer_gain: 6542
-x_axis_median: 14.116181424254592
-y_axis_median: 0.9777693748474121
-x_axis_range: 0.02 - 36.00
-y_axis_range: 0.011 - 1.000
-quadrant_Accessible, Low Impact: 1781
-quadrant_High Impact, Hard to Access: 1779
-quadrant_Low Priority: 1626
-quadrant_HIGH PRIORITY: Accessible + High Impact: 1624
+strong_ap1_gain: 6357
+strong_enhancer_gain: 6719
+x_axis_median: 15.519680995375946
+y_axis_median: 0.9774975180625916
+x_axis_range: 0.00 - 36.00
+y_axis_range: 0.004 - 1.000
+quadrant_Low Priority: 1786
+quadrant_HIGH PRIORITY: Accessible + High Impact: 1767
+quadrant_Accessible, Low Impact: 1751
+quadrant_High Impact, Hard to Access: 1733

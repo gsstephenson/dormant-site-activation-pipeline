@@ -17,6 +17,14 @@ Calculates Hamming distance between each motif site and the consensus sequence.
 ### `enumerate_paths.py`
 Generates all minimal mutation paths (≤3 steps) from each motif site to consensus.
 
+**Critical Feature - Strand-Aware Allele Handling:**
+For minus-strand motifs, the ref/alt bases are automatically reverse-complemented to match
+VCF/gnomAD convention (which always uses plus-strand reference). This ensures correct
+matching with population variant databases.
+
+- `ref_base`, `alt_base`: Genomic orientation (plus strand) - use for VCF/gnomAD matching
+- `ref_base_motif`, `alt_base_motif`: Original motif orientation - preserved for reference
+
 **Output:** `results/mutation_paths/{TF}/paths.tsv`
 
 ## Usage
