@@ -154,11 +154,13 @@ def compute_ap1_impact_score(predictions: pd.DataFrame) -> pd.DataFrame:
     logger.info(f"        Found {len(ap1_data):,} AP1-family TF predictions")
     
     if len(ap1_data) > 0:
-        # Get max and mean scores per variant
+        # Get max and mean scores per variant (both quantile and raw)
         ap1_agg = ap1_data.groupby('variant_id_str').agg({
-            'quantile_score': ['max', 'mean', 'count']
+            'quantile_score': ['max', 'mean', 'count'],
+            'raw_score': ['max', 'mean']  # Also get raw scores for selection analysis
         }).reset_index()
-        ap1_agg.columns = ['variant_id_str', 'ap1_max_score', 'ap1_mean_score', 'ap1_n_tracks']
+        ap1_agg.columns = ['variant_id_str', 'ap1_max_score', 'ap1_mean_score', 'ap1_n_tracks', 
+                           'ap1_max_raw_score', 'ap1_mean_raw_score']
         
         # Get the best TF and biosample for each variant (where score is max)
         idx_max = ap1_data.groupby('variant_id_str')['quantile_score'].idxmax()
@@ -173,6 +175,8 @@ def compute_ap1_impact_score(predictions: pd.DataFrame) -> pd.DataFrame:
             'ap1_max_score': np.nan,
             'ap1_mean_score': np.nan,
             'ap1_n_tracks': 0,
+            'ap1_max_raw_score': np.nan,
+            'ap1_mean_raw_score': np.nan,
             'ap1_best_tf': None,
             'ap1_best_biosample': None
         })
@@ -339,11 +343,18 @@ def compute_x_axis_accessibility(
 def create_activation_landscape(merged_data: pd.DataFrame) -> pd.DataFrame:
     """
     Create final activation landscape DataFrame with all coordinates and annotations.
+    
+    Y-axis uses LOG-TRANSFORMED RAW SCORES for proper visualization:
+    - Raw scores span 4-34,000 (huge range, hard to visualize)
+    - Log10(raw_score) gives 0.5-4.5 range (interpretable)
+    - This preserves the full dynamic range that showed purifying selection
     """
     landscape = merged_data.copy()
     
     # Define Y-axis options
-    landscape['y_ap1_impact'] = landscape['ap1_max_score']
+    # PRIMARY: Use log-transformed raw scores (shows true effect magnitude)
+    landscape['y_ap1_impact'] = np.log10(landscape['ap1_max_raw_score'].clip(lower=1))
+    landscape['y_ap1_quantile'] = landscape['ap1_max_score']  # Keep quantile for reference
     landscape['y_enhancer_impact'] = landscape['enhancer_max_score']
     landscape['y_global_impact'] = landscape['global_max_score']
     
@@ -371,12 +382,11 @@ def create_activation_landscape(merged_data: pd.DataFrame) -> pd.DataFrame:
     # Add interpretable columns
     landscape['is_common'] = landscape['AF_final'] >= 0.01  # ≥1% MAF
     landscape['is_single_step'] = landscape['hamming_distance'] == 1
-    landscape['shows_ap1_gain'] = landscape['ap1_max_score'] > 0.9  # Top 10% quantile
+    # Use raw score threshold (median ~550, top 25% ~800)
+    landscape['shows_ap1_gain'] = landscape['ap1_max_raw_score'] > 800  # Top ~25% raw score
     landscape['shows_enhancer_gain'] = landscape['enhancer_max_score'] > 0.9
-    
+
     return landscape
-
-
 def save_results(
     landscape: pd.DataFrame,
     output_dir: Path,

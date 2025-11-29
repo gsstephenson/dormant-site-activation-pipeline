@@ -66,6 +66,9 @@ def plot_main_landscape(
     This is the key figure showing which dormant sites are both:
     - Accessible through human variation (low X)
     - Functionally impactful when activated (high Y)
+    
+    Y-axis now uses LOG-TRANSFORMED RAW SCORES (not quantile scores) to show
+    the true effect magnitude and preserve the selection signal.
     """
     fig, ax = plt.subplots(figsize=(10, 8))
     
@@ -82,6 +85,7 @@ def plot_main_landscape(
     af_colors = np.log10(plot_data['AF_final'].clip(lower=1e-6))
     
     # Main scatter plot
+    # Y-axis is now log10(raw_score), typically ranging from ~0.5 to ~4.5
     scatter = ax.scatter(
         plot_data['x_accessibility'],
         plot_data['y_ap1_impact'],
@@ -94,12 +98,16 @@ def plot_main_landscape(
         vmax=0
     )
     
-    # Force Y-axis to show FULL 0-1 scale (critical for interpretation!)
-    ax.set_ylim(0, 1.05)
+    # Y-axis: log10(raw_score) ranges from ~0.5 to ~4.5
+    # Set axis to show full range with some padding
+    y_min_data = plot_data['y_ap1_impact'].min()
+    y_max_data = plot_data['y_ap1_impact'].max()
+    ax.set_ylim(0, y_max_data * 1.1)
     
-    # Add reference line at 90th percentile
-    ax.axhline(y=0.9, color='green', linestyle=':', linewidth=1, alpha=0.7)
-    ax.text(ax.get_xlim()[0] + 0.5, 0.91, '90th percentile', fontsize=8, color='green')
+    # Add reference lines at key thresholds (75th percentile in raw score space)
+    y_75th = plot_data['y_ap1_impact'].quantile(0.75)
+    ax.axhline(y=y_75th, color='green', linestyle=':', linewidth=1, alpha=0.7)
+    ax.text(ax.get_xlim()[0] + 0.5, y_75th + 0.05, '75th %ile (strong effect)', fontsize=8, color='green')
     
     # Add colorbar
     cbar = plt.colorbar(scatter, ax=ax, label='log₁₀(Allele Frequency)', shrink=0.8)
@@ -145,7 +153,7 @@ def plot_main_landscape(
     # Labels and title
     ax.set_xlabel('Population Accessibility Score\n[-log₁₀(AF) × Hamming Distance]\n← More Accessible | Harder to Access →', 
                   fontsize=11)
-    ax.set_ylabel('AP1-Family TF Binding Impact\n[Max Quantile Score: JUND, JUN, FOS, FOSL1/2, ATF3, BATF]',
+    ax.set_ylabel('AP1-Family TF Binding Impact\n[log₁₀(Raw Effect Score)]',
                   fontsize=11)
     ax.set_title(title, fontsize=14, fontweight='bold')
     
@@ -177,10 +185,10 @@ def plot_comparison_panels(
 ):
     """
     Create multi-panel comparison figure showing:
-    1. AP1-specific Y-axis (our approach)
-    2. Global max Y-axis (naive approach)
-    3. Enhancer marks validation
-    4. Accessibility tracks
+    1. AP1-specific Y-axis using RAW SCORES (our approach - shows selection signal)
+    2. Global max Y-axis (naive approach - quantile scores)
+    3. Enhancer marks validation (quantile scores)
+    4. Correlation: raw AP1 scores vs enhancer marks
     """
     fig, axes = plt.subplots(2, 2, figsize=(14, 12))
     
@@ -189,27 +197,28 @@ def plot_comparison_panels(
     # Common settings
     x = plot_data['x_accessibility']
     
-    # Panel A: AP1-specific (PRIMARY - our approach)
+    # Panel A: AP1-specific using RAW SCORES (PRIMARY - our approach)
     ax = axes[0, 0]
-    y = plot_data['y_ap1_impact']
-    scatter = ax.scatter(x, y, c=y, cmap='Reds', alpha=0.5, s=10, vmin=0, vmax=1)
+    y = plot_data['y_ap1_impact']  # This is now log10(raw_score)
+    y_min, y_max = y.min(), y.max()
+    scatter = ax.scatter(x, y, c=y, cmap='Reds', alpha=0.5, s=10, vmin=y_min, vmax=y_max)
     ax.set_xlabel('Accessibility Score')
-    ax.set_ylabel('AP1-Family TF Impact')
-    ax.set_title('A) PRIMARY: AP1-Family TF Binding\n(JUND, JUN, FOS, FOSL1/2, ATF3, BATF)', fontweight='bold')
-    ax.set_ylim(0, 1.05)  # Full 0-1 scale for interpretability
-    plt.colorbar(scatter, ax=ax, label='Quantile Score')
+    ax.set_ylabel('AP1-Family TF Impact [log₁₀(Raw Score)]')
+    ax.set_title('A) PRIMARY: AP1-Family TF Binding (Raw Scores)\n(JUND, JUN, FOS, FOSL1/2, ATF3, BATF)', fontweight='bold')
+    plt.colorbar(scatter, ax=ax, label='log₁₀(Raw Score)')
     
-    # Add 90th percentile reference line and quadrant lines
-    ax.axhline(y=0.9, color='green', linestyle=':', linewidth=1, alpha=0.7)
+    # Add 75th percentile reference line and quadrant lines
+    y_75 = y.quantile(0.75)
+    ax.axhline(y=y_75, color='green', linestyle=':', linewidth=1, alpha=0.7)
     ax.axhline(y=y.median(), color='gray', linestyle='--', alpha=0.5)
     ax.axvline(x=x.median(), color='gray', linestyle='--', alpha=0.5)
     
-    # Panel B: Global max (for comparison)
+    # Panel B: Global max (for comparison - still quantile scores)
     ax = axes[0, 1]
     y_global = plot_data['global_max_score']
     scatter = ax.scatter(x, y_global, c=y_global, cmap='Purples', alpha=0.5, s=10, vmin=0, vmax=1)
     ax.set_xlabel('Accessibility Score')
-    ax.set_ylabel('Global Max Impact')
+    ax.set_ylabel('Global Max Impact [Quantile]')
     ax.set_title('B) COMPARISON: Global Max (All Tracks)\n(Less biologically specific)', fontweight='bold', color='gray')
     ax.set_ylim(0, 1.05)  # Full 0-1 scale for fair comparison
     plt.colorbar(scatter, ax=ax, label='Quantile Score')
@@ -217,12 +226,12 @@ def plot_comparison_panels(
     ax.axhline(y=y_global.median(), color='gray', linestyle='--', alpha=0.5)
     ax.axvline(x=x.median(), color='gray', linestyle='--', alpha=0.5)
     
-    # Panel C: Enhancer marks validation
+    # Panel C: Enhancer marks validation (quantile scores - for comparison)
     ax = axes[1, 0]
     y_enhancer = plot_data['enhancer_max_score'].fillna(0)
     scatter = ax.scatter(x, y_enhancer, c=y_enhancer, cmap='Greens', alpha=0.5, s=10, vmin=0, vmax=1)
     ax.set_xlabel('Accessibility Score')
-    ax.set_ylabel('Enhancer Mark Impact')
+    ax.set_ylabel('Enhancer Mark Impact [Quantile]')
     ax.set_title('C) VALIDATION: Enhancer Marks\n(H3K27ac, H3K4me1)', fontweight='bold')
     ax.set_ylim(0, 1.05)  # Full 0-1 scale for consistency
     plt.colorbar(scatter, ax=ax, label='Quantile Score')
@@ -230,13 +239,13 @@ def plot_comparison_panels(
     ax.axhline(y=y_enhancer.median(), color='gray', linestyle='--', alpha=0.5)
     ax.axvline(x=x.median(), color='gray', linestyle='--', alpha=0.5)
     
-    # Panel D: AP1 vs Enhancer correlation
+    # Panel D: AP1 Raw Score vs Enhancer Quantile correlation
     ax = axes[1, 1]
     valid_both = plot_data.dropna(subset=['y_ap1_impact', 'enhancer_max_score'])
     if len(valid_both) > 10:
         scatter = ax.scatter(
-            valid_both['y_ap1_impact'], 
-            valid_both['enhancer_max_score'],
+            valid_both['y_ap1_impact'],  # log10(raw_score)
+            valid_both['enhancer_max_score'],  # quantile
             c=valid_both['x_accessibility'],
             cmap='viridis_r',
             alpha=0.5, 
@@ -250,15 +259,10 @@ def plot_comparison_panels(
                 transform=ax.transAxes, fontsize=10,
                 verticalalignment='top',
                 bbox=dict(boxstyle='round', facecolor='white', alpha=0.8))
-        
-        # Add diagonal reference
-        ax.plot([0, 1], [0, 1], 'k--', alpha=0.3, label='y=x')
     
-    # Full 0-1 scale on both axes for consistency
-    ax.set_xlim(0, 1.05)
+    ax.set_xlabel('AP1-Family TF Impact [log₁₀(Raw Score)]')
+    ax.set_ylabel('Enhancer Mark Impact [Quantile]')
     ax.set_ylim(0, 1.05)
-    ax.set_xlabel('AP1-Family TF Impact')
-    ax.set_ylabel('Enhancer Mark Impact')
     ax.set_title('D) CONCORDANCE: AP1 vs Enhancer\n(Validates functional activation)', fontweight='bold')
     
     plt.suptitle('AP1 Dormant Site Activation Landscape - Multi-Modal Analysis', 
@@ -289,13 +293,14 @@ def plot_tf_breakdown(data: pd.DataFrame, output_path: Path):
         ax.text(bar.get_width() + 50, bar.get_y() + bar.get_height()/2,
                 f'{count:,}', va='center', fontsize=9)
     
-    # Panel B: Score distribution by TF
+    # Panel B: Score distribution by TF - USE RAW SCORES (log-transformed)
     ax = axes[1]
     tfs_to_plot = tf_counts.head(8).index.tolist()
     tf_data = data[data['ap1_best_tf'].isin(tfs_to_plot)]
     
     positions = range(len(tfs_to_plot))
-    bp_data = [tf_data[tf_data['ap1_best_tf'] == tf]['ap1_max_score'].dropna() 
+    # Use y_ap1_impact which is now log10(raw_score)
+    bp_data = [tf_data[tf_data['ap1_best_tf'] == tf]['y_ap1_impact'].dropna() 
                for tf in tfs_to_plot]
     
     bp = ax.boxplot(bp_data, positions=positions, patch_artist=True)
@@ -305,10 +310,11 @@ def plot_tf_breakdown(data: pd.DataFrame, output_path: Path):
     
     ax.set_xticks(positions)
     ax.set_xticklabels(tfs_to_plot, rotation=45, ha='right')
-    ax.set_ylabel('AP1 Max Quantile Score')
-    ax.set_ylim(0, 1.05)  # Full 0-1 scale for proper interpretation
-    ax.axhline(y=0.9, color='green', linestyle=':', linewidth=1, alpha=0.7)
-    ax.set_title('B) Score Distribution by TF', fontweight='bold')
+    ax.set_ylabel('AP1 Impact [log₁₀(Raw Score)]')
+    # Use data-driven y-limits for log-transformed raw scores
+    y_75 = data['y_ap1_impact'].quantile(0.75)
+    ax.axhline(y=y_75, color='green', linestyle=':', linewidth=1, alpha=0.7)
+    ax.set_title('B) Effect Size Distribution by TF', fontweight='bold')
     
     plt.suptitle('AP1-Family Transcription Factor Analysis', fontsize=12, fontweight='bold')
     plt.tight_layout()
@@ -336,7 +342,7 @@ def plot_high_priority_detail(data: pd.DataFrame, output_path: Path):
     
     fig, axes = plt.subplots(2, 2, figsize=(12, 10))
     
-    # Panel A: Zoom on high-priority quadrant - USE FULL 0-1 SCALE
+    # Panel A: Zoom on high-priority quadrant - use actual data range for log(raw_score)
     ax = axes[0, 0]
     scatter = ax.scatter(
         high_priority['x_accessibility'],
@@ -347,13 +353,17 @@ def plot_high_priority_detail(data: pd.DataFrame, output_path: Path):
         s=30
     )
     ax.set_xlabel('Accessibility Score')
-    ax.set_ylabel('AP1 Impact Score')
-    ax.set_ylim(0, 1.05)  # Full 0-1 scale to show how impressive these scores are
+    ax.set_ylabel('AP1 Impact [log₁₀(Raw Score)]')
+    # Use actual data range for log-transformed raw scores
+    y_min = high_priority['y_ap1_impact'].min() * 0.95
+    y_max = high_priority['y_ap1_impact'].max() * 1.05
+    ax.set_ylim(y_min, y_max)
     ax.set_title(f'A) High-Priority Candidates (n={len(high_priority):,})', fontweight='bold')
     
-    # Add annotation showing where the data actually is
-    ax.axhline(y=0.9, color='green', linestyle='--', alpha=0.5, linewidth=1)
-    ax.text(ax.get_xlim()[1] * 0.95, 0.91, '90th %ile', ha='right', fontsize=8, color='green')
+    # Add annotation showing 75th percentile
+    y_75 = high_priority['y_ap1_impact'].quantile(0.75)
+    ax.axhline(y=y_75, color='green', linestyle='--', alpha=0.5, linewidth=1)
+    ax.text(ax.get_xlim()[1] * 0.95, y_75 + 0.02, '75th %ile', ha='right', fontsize=8, color='green')
     
     # Panel B: AF distribution of high-priority - use -log10(AF) so higher = rarer
     ax = axes[0, 1]

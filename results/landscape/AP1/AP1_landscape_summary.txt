@@ -14,16 +14,16 @@ SUMMARY STATISTICS:
 total_variants: 7037
 variants_with_ap1_data: 7037
 variants_with_enhancer_data: 7037
-high_priority_count: 1767
+high_priority_count: 1737
 common_variants: 129
 single_step_variants: 1
-strong_ap1_gain: 6357
+strong_ap1_gain: 1790
 strong_enhancer_gain: 6719
-x_axis_median: 15.519680995375946
-y_axis_median: 0.9774975180625916
+x_axis_median: 15.534426164433466
+y_axis_median: 2.7543482780456543
 x_axis_range: 0.00 - 36.00
-y_axis_range: 0.004 - 1.000
-quadrant_Low Priority: 1786
-quadrant_HIGH PRIORITY: Accessible + High Impact: 1767
-quadrant_Accessible, Low Impact: 1751
-quadrant_High Impact, Hard to Access: 1733
+y_axis_range: 0.503 - 4.529
+quadrant_Accessible, Low Impact: 1781
+quadrant_High Impact, Hard to Access: 1771
+quadrant_Low Priority: 1748
+quadrant_HIGH PRIORITY: Accessible + High Impact: 1737
