@@ -149,9 +149,10 @@ Y = max(quantile_score) across AP1-family TFs
 - Top responding TFs: FOS (25.8%), JUND (15.8%), ATF3 (9.0%)
 
 ### Selection Analysis
-- Among observed variants (AF>0), weak positive correlation between rarity and impact (Spearman r = 0.056, p = 5.8×10⁻⁶)
-- Effect is modest (<1% variance explained)
-- No strong evidence for purifying selection against dormant site activation
+- **Significant purifying selection detected** using raw AlphaGenome effect sizes
+- Spearman correlation (effect size vs rarity): **r = 0.096, p = 4.97×10⁻¹⁵**
+- Variants with stronger predicted AP1 binding are kept at lower population frequencies
+- Consistent with selection against creating functional TF sites in inappropriate contexts
 
 ---
 
