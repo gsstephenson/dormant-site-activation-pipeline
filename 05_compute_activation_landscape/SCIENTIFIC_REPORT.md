@@ -5,17 +5,15 @@
 **Affiliations:**  
 ¹ LAYER Laboratory, Department of Molecular, Cellular, and Developmental Biology, University of Colorado Boulder, Boulder, CO 80309
 
-**Date:** November 29, 2025 (Updated with corrected statistical analysis)
+**Date:** December 1, 2025 (Updated with disease database validation)
 
-**Keywords:** transcription factor binding, AP1, regulatory variation, population genetics, AlphaGenome, functional genomics
+**Keywords:** transcription factor binding, AP1, regulatory variation, population genetics, AlphaGenome, functional genomics, dormant sites, purifying selection
 
 ---
 
 ## Abstract
 
-Transcription factor binding sites (TFBSs) are fundamental regulatory elements that control gene expression, yet the human genome harbors millions of "dormant" sequences that are near-matches to consensus motifs but lack sufficient affinity for functional binding. We hypothesized that naturally occurring genetic variants could activate these dormant sites, potentially creating novel regulatory elements with functional consequences. Here, we present a comprehensive computational analysis of dormant AP1 (FOS/JUN heterodimer) binding sites across the human genome, integrating motif scanning, population genetics from gnomAD v4.1, and functional impact prediction using AlphaGenome's multi-modal deep learning framework. We identified **7,037 variants** that could activate dormant AP1 sites, with **90.3% (n=6,357)** predicted to substantially increase AP1-family transcription factor binding. Strikingly, **91.1% of these activating variants are ultra-rare (AF < 0.01%)**. We constructed a two-dimensional "activation landscape" mapping population accessibility (X-axis) against functional impact (Y-axis), identifying **1,767 high-priority candidates** that are both population-accessible and functionally impactful. The predominant AP1-family transcription factors showing predicted binding gains were **FOS (25.8%)**, **JUND (15.8%)**, and **ATF3 (9.0%)**. A strong positive correlation between AP1 binding impact and enhancer mark activation (H3K27ac/H3K4me1; **r=0.579, p<10⁻⁴⁰**) validates that predicted TF binding gains correspond to functional enhancer activation. 
-
-**Critically, our analysis reveals clear evidence for purifying selection against dormant site activation:** Using raw AlphaGenome effect sizes (which span 4-34,000, avoiding ceiling effects in quantile scores), we find a highly significant positive correlation between effect magnitude and variant rarity (**Spearman r=0.096, p=4.97×10⁻¹⁵**). Variants in the strongest effect quartile (Q4) are significantly rarer than those in the weakest quartile (Q1; **Mann-Whitney p=5.29×10⁻¹³**). This demonstrates that variants predicted to create stronger AP1 binding are kept at lower frequencies in the population—consistent with purifying selection removing variants that would create functional TF binding sites in inappropriate genomic contexts.
+Transcription factor binding sites (TFBSs) are fundamental regulatory elements that control gene expression, yet the human genome harbors millions of "dormant" sequences—near-matches to consensus motifs that lack sufficient affinity for functional binding. We hypothesized that naturally occurring genetic variants could activate these dormant sites, creating novel regulatory elements with potentially deleterious consequences. To test this, we developed a computational pipeline integrating genome-wide motif scanning, population genetics (gnomAD v4.1), and deep learning-based functional predictions (AlphaGenome) to systematically identify dormant AP-1 binding sites activatable by human variation. We identified thousands of variants capable of activating dormant AP-1 sites, the vast majority of which are predicted to substantially increase AP-1-family transcription factor binding. Strikingly, over 90% of these activating variants are ultra-rare, and most require multiple mutations to reach the AP-1 consensus—suggesting strong evolutionary buffering against accidental activation. We constructed an "activation landscape" mapping population accessibility against functional impact, identifying high-priority candidates for experimental validation. Predicted AP-1 binding gains correlate strongly with enhancer activation marks, validating biological relevance. Our analysis reveals clear evidence for purifying selection: variants predicted to create stronger AP-1 binding are significantly rarer in the population, demonstrating that selection acts against creating functional TF binding sites in inappropriate genomic contexts. Disease database validation revealed no overlap with ClinVar—expected for ultra-rare non-coding variants—but significant proximity to GWAS loci, suggesting these novel candidates may represent rare causal variants underlying common disease signals. This framework demonstrates that dormant TF binding sites represent an underexplored reservoir of regulatory potential under active purifying selection.
 
 ---
 
@@ -616,5 +614,6 @@ We thank the gnomAD consortium for making population genetic data publicly avail
 
 ---
 
-*Manuscript prepared: November 28, 2025*
-*Pipeline corrected and results updated: November 28, 2025*
+*Manuscript prepared: November 28, 2025*  
+*Pipeline corrected and results updated: November 28, 2025*  
+*Disease database validation added: December 1, 2025*
