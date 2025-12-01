@@ -181,12 +181,18 @@ MODULES = {
         'skip_by_default': False,
     },
     6: {
-        'name': 'Disease Annotation',
-        'description': 'ClinVar intersection and GWAS proximity enrichment analysis',
+        'name': 'Disease Overlap Analysis',
+        'description': 'ClinVar intersection and GWAS proximity enrichment - validates novel disease candidates',
         'scripts': [
-            ('python', '06_disease_annotation/run_disease_annotation.py', ['--config', '{config}']),
+            ('python', '06_disease_overlap/disease_overlap.py', [
+                '--ap1-landscape', 'results/landscape/{tf_name}/{tf_name}_activation_landscape.tsv',
+                '--clinvar-vcf', 'data/clinvar/raw/clinvar.vcf.gz',
+                '--gwas-catalog', 'data/gwas/raw/gwas_catalog_associations.tsv',
+                '--output-dir', 'results/disease_overlap/{tf_name}',
+                '--gwas-window', '1000'
+            ]),
         ],
-        'estimated_time': '~2-5 minutes',
+        'estimated_time': '~1-2 minutes',
         'skip_by_default': False,
     },
 }
@@ -314,8 +320,8 @@ def check_prerequisites(module_num: int, base_dir: Path, config: dict) -> tuple:
         ],
         6: [
             ('results/landscape/{tf}/{tf}_activation_landscape.tsv', 'Module 05 output'),
-            ('data/clinvar/clinvar.vcf.gz', 'ClinVar VCF'),
-            ('data/gwas/gwas_catalog_associations.tsv', 'GWAS Catalog'),
+            ('data/clinvar/raw/clinvar.vcf.gz', 'ClinVar VCF'),
+            ('data/gwas/raw/gwas_catalog_associations.tsv', 'GWAS Catalog'),
         ],
     }
     
@@ -589,8 +595,9 @@ def run_pipeline(
             script = script_info[1]
             args = script_info[2] if len(script_info) > 2 else []
             
-            # Replace {config} placeholder
-            args = [a.format(config=str(config_path)) for a in args]
+            # Replace {config} and {tf_name} placeholders
+            tf_name = config.get('tf_name', 'AP1')
+            args = [a.format(config=str(config_path), tf_name=tf_name) for a in args]
             
             print(f"\n  [{i}/{len(scripts)}] {script}")
             

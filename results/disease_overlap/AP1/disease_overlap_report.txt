@@ -1,0 +1,129 @@
+================================================================================
+DISEASE VARIANT OVERLAP ANALYSIS - SUMMARY REPORT
+================================================================================
+
+## INPUT DATA
+Total AP1 activating variants analyzed: 7,037
+  - High priority variants: 1,737
+
+## CLINVAR OVERLAP
+AP1 variants with ClinVar pathogenic annotations: 0
+
+## GWAS CATALOG OVERLAP
+AP1 variants near GWAS loci: 1,463
+Total variant-trait associations: 3,423
+Unique traits represented: 1883
+
+Trait categories:
+  - Other: 2806
+  - Metabolic: 218
+  - Cardiovascular: 127
+  - Neurological: 88
+  - Cancer: 85
+  - Autoimmune: 54
+  - Respiratory: 45
+
+Top 15 disease/traits in GWAS overlaps:
+  - Height: 115
+  - Body mass index: 46
+  - Height (baseline): 44
+  - Educational attainment: 43
+  - Bone mineral density mean: 31
+  - Waist circumference adjusted for body mass index: 24
+  - Systolic blood pressure: 23
+  - Inguinal hernia: 21
+  - Smoking initiation: 21
+  - Hip circumference adjusted for BMI: 21
+  - Insomnia: 20
+  - Post bronchodilator FEV1/FVC ratio: 19
+  - Platelet count: 19
+  - Waist-to-hip ratio adjusted for BMI: 17
+  - Type 2 diabetes: 17
+
+Distance to GWAS lead variant:
+  - Exact match (0bp): 7
+  - Within 100bp: 279
+  - Within 500bp: 1,674
+  - Within 1000bp: 3,423
+
+Genome-wide significant associations (p<5e-8): 2,710
+
+High-priority AP1 variants near GWAS loci: 431
+
+## KEY FINDINGS
+ClinVar overlap rate: 0.00%
+GWAS overlap rate: 20.79%
+
+### Notable Disease Associations:
+
+  chr17:36002761:G>C
+    - Trait: C-C motif chemokine 15 levels
+    - GWAS SNP: rs854628 (p=0.00e+00)
+    - Distance: 15bp
+    - AP1 raw score: 3424.5
+    - Best TF: JUNB
+
+  chr17:36002761:G>C
+    - Trait: Hsp90alpha protein levels (SomaScan ID:14109-15)
+    - GWAS SNP: rs854628 (p=4.00e-19)
+    - Distance: 15bp
+    - AP1 raw score: 3424.5
+    - Best TF: JUNB
+
+  chr11:77806748:C>A
+    - Trait: Platelet count
+    - GWAS SNP: rs4469913 (p=2.00e-27)
+    - Distance: 18bp
+    - AP1 raw score: 1120.0
+    - Best TF: FOS
+
+  chr4:7435002:C>A
+    - Trait: Proactivator polypeptide-like 1 levels (PSAPL1.8814.33.3)
+    - GWAS SNP: rs77191210 (p=2.00e-58)
+    - Distance: 28bp
+    - AP1 raw score: 2678.0
+    - Best TF: FOSL2
+
+  chr3:186365850:G>C
+    - Trait: Lung function (FEV1/FVC)
+    - GWAS SNP: rs7618021 (p=1.00e-12)
+    - Distance: 28bp
+    - AP1 raw score: 2557.0
+    - Best TF: FOSL2
+
+  chr16:1767426:G>C
+    - Trait: HAGH protein levels
+    - GWAS SNP: rs2575368 (p=2.00e-42)
+    - Distance: 30bp
+    - AP1 raw score: 1430.0
+    - Best TF: FOS
+
+  chr7:28354594:C>A
+    - Trait: CRYBB2 protein levels
+    - GWAS SNP: rs75174753 (p=8.00e-18)
+    - Distance: 33bp
+    - AP1 raw score: 2567.5
+    - Best TF: FOSL2
+
+  chr2:62341119:C>A
+    - Trait: Ankylosing spondylitis (PheCode 715.2)
+    - GWAS SNP: rs13001372 (p=2.00e-12)
+    - Distance: 33bp
+    - AP1 raw score: 3287.0
+    - Best TF: BATF
+
+  chr7:93043880:G>C
+    - Trait: Educational attainment
+    - GWAS SNP: rs6960056 (p=4.00e-34)
+    - Distance: 40bp
+    - AP1 raw score: 2018.0
+    - Best TF: FOSL2
+
+  chr6:127177979:T>A
+    - Trait: Heel bone mineral density
+    - GWAS SNP: rs75699605 (p=8.00e-14)
+    - Distance: 40bp
+    - AP1 raw score: 1425.0
+    - Best TF: JUNB
+
+================================================================================

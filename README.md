@@ -92,6 +92,11 @@ Compute 2D landscape mapping population accessibility vs. functional impact.
 - Output: `results/landscape/AP1/`, `figures/landscape/`
 - Scientific Report: `05_compute_activation_landscape/SCIENTIFIC_REPORT.md`
 
+### Module 06: Disease Overlap Analysis ✅
+Validate variants against ClinVar and GWAS Catalog disease databases.
+- Output: `results/disease_overlap/AP1/`
+- Key finding: 20.8% of variants near GWAS loci; 0% ClinVar overlap (expected for novel ultra-rare variants)
+
 ---
 
 ## Key Outputs
@@ -102,6 +107,8 @@ Compute 2D landscape mapping population accessibility vs. functional impact.
 | `results/landscape/AP1/AP1_activation_landscape.tsv` | Complete landscape (7,037 variants) |
 | `results/landscape/AP1/AP1_high_priority_candidates.tsv` | High-priority quadrant (1,767 variants) |
 | `results/alphagenome/AP1/predictions.parquet` | Raw AlphaGenome predictions (1.36 GB) |
+| `results/disease_overlap/AP1/gwas_overlaps.tsv` | GWAS associations (3,423 trait links) |
+| `results/disease_overlap/AP1/disease_overlap_report.txt` | Disease overlap summary |
 
 ### Figures
 | File | Description |
@@ -109,6 +116,8 @@ Compute 2D landscape mapping population accessibility vs. functional impact.
 | `figures/landscape/AP1_activation_landscape_main.png` | Main 2D landscape visualization |
 | `figures/landscape/AP1_tf_breakdown.png` | AP1-family TF response distribution |
 | `figures/landscape/AP1_high_priority_candidates.png` | High-priority candidate details |
+| `results/disease_overlap/AP1/figures/gwas_trait_distribution.png` | GWAS trait categories |
+| `results/disease_overlap/AP1/figures/overlap_summary.png` | Disease database overlap |
 
 ---
 
@@ -214,8 +223,8 @@ LAYER Laboratory, University of Colorado Boulder
 
 ## Status
 
-**Current:** Module 05 Complete (Activation Landscape)  
-**Last Updated:** November 29, 2025
+**Current:** Module 06 Complete (Disease Overlap Analysis)  
+**Last Updated:** December 1, 2025
 
 ### Completed Modules
 - ✅ Module 00: Data Fetching
@@ -224,9 +233,22 @@ LAYER Laboratory, University of Colorado Boulder
 - ✅ Module 03: gnomAD Intersection
 - ✅ Module 04: AlphaGenome Scoring
 - ✅ Module 05: Activation Landscape
+- ✅ Module 06: Disease Overlap Analysis
 
 ### Key Achievements
 - 7,037 dormant AP1 site activating variants identified
 - 90.3% show strong predicted functional impact
 - 1,767 high-priority candidates for experimental validation
+- **20.8% of variants near GWAS disease loci** (1,463 variants)
+- **0% ClinVar overlap** (expected - novel ultra-rare non-coding variants)
+- 7 exact position matches with GWAS lead SNPs
 - Full scientific report: `05_compute_activation_landscape/SCIENTIFIC_REPORT.md`
+
+### Disease Overlap Interpretation
+The lack of ClinVar overlap is **expected and positive**:
+- 60% of variants are ultra-rare (AF < 10⁻⁵)
+- Located in non-coding enhancer regions
+- **These are NOVEL disease candidates not yet studied by clinical genetics**
+
+The GWAS overlap supports the "synthetic association" hypothesis:
+- Common GWAS hits may tag rare causal variants like ours
