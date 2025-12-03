@@ -36,7 +36,8 @@ The ~30,000 absent variants are "forbidden" by natural selection. This module sc
 ## Output
 
 - `results/forbidden_variants/AP1/forbidden_variants.tsv` — List of forbidden variants
-- `results/forbidden_variants/AP1/predictions_summary.tsv` — Summary stats per variant
+- `results/forbidden_variants/AP1/predictions_summary.tsv` — Summary stats per variant (global max)
+- `results/forbidden_variants/AP1/predictions_summary_ap1.tsv` — **AP1-specific scores** for Module 09 visualization
 - `results/forbidden_variants/AP1/top_candidates.tsv` — Top 1000 by predicted impact  
 - `results/forbidden_variants/AP1/partitions/` — Full predictions (partitioned parquet)
 
@@ -73,7 +74,44 @@ python 08_forbidden_variants/score_forbidden_variants.py \
   --output results/forbidden_variants/AP1/ \
   --batch-size 500 \
   --resume-from 20
+
+# Step 3: Extract AP1-specific scores (post-processing for Module 09)
+python 08_forbidden_variants/compute_ap1_scores.py \
+  --partitions-dir results/forbidden_variants/AP1/partitions/ \
+  --original-summary results/forbidden_variants/AP1/predictions_summary.tsv \
+  --output results/forbidden_variants/AP1/predictions_summary_ap1.tsv
 ```
+
+## AP1-Specific Score Extraction
+
+The main scoring script (`score_forbidden_variants.py`) generates global statistics across all ~27,000 AlphaGenome tracks. For downstream analysis comparing forbidden variants to observed variants (Module 05), we need **AP1-family-specific scores**.
+
+The `compute_ap1_scores.py` script extracts scores for a comprehensive set of AP1-related transcription factors:
+
+### AP1-Family TFs Included (47 total)
+
+| Category | Transcription Factors |
+|----------|----------------------|
+| **Core AP1 (FOS/JUN)** | JUN, JUNB, JUND, FOS, FOSB, FOSL1, FOSL2 |
+| **ATF/CREB family** | ATF1, ATF2, ATF3, ATF4, ATF5, ATF6, ATF7, CREB1, CREM |
+| **BATF family** | BATF, BATF2, BATF3 |
+| **Small MAF** | MAFK, MAFF, MAFG, MAF, MAFB |
+| **NRF/ARE family** | NFE2, NFE2L1/NRF1, NFE2L2/NRF2, NFE2L3/NRF3, BACH1, BACH2 |
+
+### Output Columns (predictions_summary_ap1.tsv)
+
+| Column | Description |
+|--------|-------------|
+| `ap1_quantile_max` | Max quantile score across AP1-family TFs |
+| `ap1_quantile_mean` | Mean quantile score |
+| `ap1_raw_max` | Max raw score (**comparable to Module 05**) |
+| `ap1_raw_mean` | Mean raw score |
+| `ap1_n_tracks` | Number of AP1 TF tracks with predictions |
+| `ap1_best_tf` | TF with highest score |
+| `ap1_best_biosample` | Cell type with highest score |
+| `enhancer_quantile_max` | Max H3K27ac/H3K4me1 score |
+| `accessibility_quantile_max` | Max ATAC/DNase score |
+| `global_raw_max` | Global max for comparison |
 
 ## Results (Run: Dec 2-3, 2025)
 
