@@ -104,6 +104,21 @@ Coverage-validated constraint analysis using gnomAD v4.1 allele number data.
 - **Key finding: 76.5-fold depletion** of H=1 activating variants (p = 4.2×10⁻³²)
 - ~30,000 "forbidden variants" identified (positions where mutations would create AP1 sites but are absent from 807K humans)
 
+### Module 08: Forbidden Variants Scoring ✅
+Memory-safe AlphaGenome scoring of 30,000 forbidden variants using streaming/chunked approach.
+- Output: `results/forbidden_variants/AP1/`
+- Runtime: 11.4 hours
+- 804.5M predictions across 29,957 variants
+- Top candidates: chr1:204410195:A>C (raw score 260,224)
+- 47% have quantile_max > 0.999 (extreme predicted impact)
+
+### Module 09: Visualization Suite ✅
+Publication-quality figures summarizing the pipeline findings.
+- Output: `figures/selection_gradient/`, `figures/forbidden_variants/`
+- Scientific Report: `09_visualize_results/SCIENTIFIC_REPORT.md`
+- 6 multi-panel figures generated (PNG + PDF)
+- Key visualizations: selection gradient, forbidden variant characterization, TF-tissue heatmap
+
 ---
 
 ## Key Outputs
@@ -118,6 +133,9 @@ Coverage-validated constraint analysis using gnomAD v4.1 allele number data.
 | `results/disease_overlap/AP1/disease_overlap_report.txt` | Disease overlap summary |
 | `results/purifying_selection/AP1/constraint_by_hamming.tsv` | Coverage-validated constraint |
 | `results/purifying_selection/AP1/purifying_selection_summary.txt` | Selection analysis summary |
+| `results/forbidden_variants/AP1/forbidden_variants.tsv` | 29,957 forbidden variants |
+| `results/forbidden_variants/AP1/predictions_summary_ap1.tsv` | AP1-specific scores for forbidden variants |
+| `results/forbidden_variants/AP1/top_candidates.tsv` | Top 1000 forbidden variants by impact |
 
 ### Figures
 | File | Description |
@@ -128,6 +146,12 @@ Coverage-validated constraint analysis using gnomAD v4.1 allele number data.
 | `results/disease_overlap/AP1/figures/gwas_trait_distribution.png` | GWAS trait categories |
 | `results/disease_overlap/AP1/figures/overlap_summary.png` | Disease database overlap |
 | `figures/purifying_selection/AP1_constraint_evidence.png` | Constraint gradient visualization |
+| `figures/selection_gradient/selection_gradient.png` | Selection gradient (4-panel) |
+| `figures/forbidden_variants/forbidden_variants_characterization.png` | Forbidden variant properties |
+| `figures/forbidden_variants/tf_tissue_heatmap.png` | TF-tissue specificity |
+| `figures/forbidden_variants/genomic_distribution.png` | Chromosomal distribution |
+| `figures/forbidden_variants/selection_signal_strength.png` | Selection signal evidence |
+| `figures/forbidden_variants/functional_context.png` | Functional chromatin context |
 
 ---
 
@@ -233,8 +257,8 @@ LAYER Laboratory, University of Colorado Boulder
 
 ## Status
 
-**Current:** Module 07 Complete (Purifying Selection Analysis)  
-**Last Updated:** December 2, 2025
+**Current:** Module 09 Complete (Visualization Suite)  
+**Last Updated:** December 3, 2025
 
 ### Completed Modules
 - ✅ Module 00: Data Fetching
@@ -245,6 +269,11 @@ LAYER Laboratory, University of Colorado Boulder
 - ✅ Module 05: Activation Landscape
 - ✅ Module 06: Disease Overlap Analysis
 - ✅ Module 07: Purifying Selection Analysis
+- ✅ Module 08: Forbidden Variants Scoring
+- ✅ Module 09: Visualization Suite
+
+### Next: Module 10 — GWAS/ClinVar Validation
+Orthogonal validation using disease-associated variants.
 
 ### Key Achievements
 - 7,037 dormant AP1 site activating variants identified
@@ -254,7 +283,9 @@ LAYER Laboratory, University of Colorado Boulder
 - **0% ClinVar overlap** (expected - novel ultra-rare non-coding variants)
 - 7 exact position matches with GWAS lead SNPs
 - **76.5× depletion** of single-mutation AP1 activators (p = 4.2×10⁻³²)
-- **~30,000 "forbidden variants"** — positions absent from 807K humans despite high coverage
+- **29,957 "forbidden variants"** — positions absent from 807K humans despite high coverage
+- **804.5M AlphaGenome predictions** for forbidden variants
+- **6 publication-quality figures** generated
 - Full scientific reports in each module directory
 
 ### Disease Overlap Interpretation
