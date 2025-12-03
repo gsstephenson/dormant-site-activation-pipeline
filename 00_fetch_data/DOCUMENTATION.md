@@ -109,6 +109,90 @@ python download_gnomad_index_info.py --config ../pipeline_config.yaml --create-s
 
 ---
 
+### `download_gnomad.py`
+Downloads gnomAD v4.1 VCF files (per-chromosome) and creates symlinks.
+
+**Usage:**
+```bash
+# Test with small chromosomes first
+python download_gnomad.py --chromosomes 21,22
+
+# Download all chromosomes (WARNING: ~500 GB)
+python download_gnomad.py --all-chromosomes
+
+# Dry run to see what would be downloaded
+python download_gnomad.py --all-chromosomes --dry-run
+
+# Skip download, just create symlinks (if files already exist)
+python download_gnomad.py --all-chromosomes --skip-download
+```
+
+**Arguments:**
+- `--chromosomes` - Comma-separated list of chromosomes (default: 21,22)
+- `--all-chromosomes` - Download all chromosomes (1-22,X,Y)
+- `--dry-run` - Show what would be downloaded without downloading
+- `--skip-download` - Only create symlinks
+- `--storage-dir` - Storage location for files (default: /mnt/data_1/gnomAD_data/raw/gnomad_v4.1)
+- `--work-dir` - Work location for symlinks (default: data/gnomad)
+
+**Output:**
+- `/mnt/data_1/gnomAD_data/raw/gnomad_v4.1/vcf/` - VCF files stored here
+- `data/gnomad/` - Symlinks to VCF files
+
+---
+
+### `download_gnomad_coverage.py` ⭐ NEW
+Downloads gnomAD v4.1 allele number data for ALL sites, essential for high-confidence constraint analysis.
+
+**Why this data matters (from gnomAD v4.1 release notes, April 2024):**
+> "We have calculated AN information for loci that do not yet have variation 
+> observed within gnomAD. This means that even for loci where zero gnomAD 
+> samples have a non-reference genotype call, we report the exact AN based 
+> on the total number of defined sample genotype calls at that site."
+
+This allows us to distinguish:
+- **High AN, no variant** = Position well-covered, variant truly absent → **CONSTRAINT**
+- **Low AN, no variant** = Position poorly covered → **UNCERTAINTY**
+
+**Usage:**
+```bash
+# Check if file exists on GCS
+python download_gnomad_coverage.py --list-only
+
+# Preview what would be downloaded  
+python download_gnomad_coverage.py --dry-run
+
+# Download the file (~12 GB, takes 10-30 min)
+python download_gnomad_coverage.py
+
+# Create symlink only (if file already downloaded)
+python download_gnomad_coverage.py --skip-download
+```
+
+**Arguments:**
+- `--list-only` - Only check if file exists on GCS
+- `--dry-run` - Show what would be downloaded without downloading
+- `--skip-download` - Only create symlinks (if file already exists)
+- `--skip-index` - Skip tabix index creation
+- `--storage-dir` - Storage location (default: /mnt/data_1/gnomAD_data/raw/gnomad_v4.1)
+- `--work-dir` - Work location for symlinks (default: data/gnomad_coverage)
+
+**Output:**
+- `/mnt/data_1/gnomAD_data/raw/gnomad_v4.1/coverage/gnomad.genomes.v4.1.allele_number_all_sites.tsv.bgz` - Main file
+- `data/gnomad_coverage/` - Symlink to coverage file
+
+**File format:**
+- `locus` - Genomic position (chr:pos format)
+- `AN` - Allele number = 2 × number of samples with genotype call
+
+**Recommended thresholds for constraint analysis:**
+- `AN >= 100,000` (~50K samples) = High confidence
+- `AN >= 50,000` (~25K samples) = Medium confidence  
+- `AN < 50,000` = Low confidence, interpret with caution
+- Position missing from file = No genotype calls (uncallable region)
+
+---
+
 ## gnomAD Download Instructions
 
 The gnomAD v4.1 dataset is large (~750 GB total). Follow these steps:
@@ -159,12 +243,14 @@ bash download_reference.sh
 # 2. Download motifs
 python download_motifs.py --motif-id MA0099.3
 
-# 3. Verify gnomAD (assumes already downloaded)
-python download_gnomad_index_info.py --show-download-instructions
-# ... follow instructions to download gnomAD ...
+# 3. Download gnomAD VCF files (per-chromosome)
+python download_gnomad.py --all-chromosomes
 
-# 4. Once downloaded, verify and create symlink
-python download_gnomad_index_info.py --config ../pipeline_config.yaml --create-symlink
+# 4. Download gnomAD coverage data (for constraint analysis)
+python download_gnomad_coverage.py --all-chromosomes
+
+# 5. Verify installation
+python download_gnomad_index_info.py --config ../pipeline_config.yaml
 ```
 
 ---
@@ -181,7 +267,19 @@ data/
 │       ├── MA0099.3.meme      # AP1 motif in MEME format
 │       ├── MA0099.3.json      # Raw motif data
 │       └── motif_metadata.yaml # Pipeline metadata
-└── gnomad/                     # Symlink to /mnt/data_1/gnomAD_data/raw/gnomad_v4.1
+├── gnomad/                     # Symlinks to VCF files
+│   ├── gnomad.genomes.v4.1.sites.chr1.vcf.bgz -> /mnt/data_1/.../vcf/...
+│   ├── gnomad.genomes.v4.1.sites.chr1.vcf.bgz.tbi
+│   └── ... (all chromosomes)
+└── gnomad_coverage/            # Symlinks to coverage files
+    ├── gnomad.genomes.v4.1.coverage.summary.chr1.tsv.bgz -> /mnt/data_1/.../coverage/...
+    └── ... (all chromosomes)
+
+# Actual storage location (large HDD):
+/mnt/data_1/gnomAD_data/raw/gnomad_v4.1/
+├── vcf/                        # VCF files (~500 GB)
+├── coverage/                   # Coverage files (~50 GB)
+└── constraint/                 # Constraint scores (optional)
 ```
 
 ---

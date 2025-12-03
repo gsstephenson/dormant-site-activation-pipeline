@@ -97,6 +97,13 @@ Validate variants against ClinVar and GWAS Catalog disease databases.
 - Output: `results/disease_overlap/AP1/`
 - Key finding: 20.8% of variants near GWAS loci; 0% ClinVar overlap (expected for novel ultra-rare variants)
 
+### Module 07: Purifying Selection Analysis ✅
+Coverage-validated constraint analysis using gnomAD v4.1 allele number data.
+- Output: `results/purifying_selection/AP1/`
+- Scientific Report: `07_purifying_selection/SCIENTIFIC_REPORT.md`
+- **Key finding: 76.5-fold depletion** of H=1 activating variants (p = 4.2×10⁻³²)
+- ~30,000 "forbidden variants" identified (positions where mutations would create AP1 sites but are absent from 807K humans)
+
 ---
 
 ## Key Outputs
@@ -109,6 +116,8 @@ Validate variants against ClinVar and GWAS Catalog disease databases.
 | `results/alphagenome/AP1/predictions.parquet` | Raw AlphaGenome predictions (1.36 GB) |
 | `results/disease_overlap/AP1/gwas_overlaps.tsv` | GWAS associations (3,423 trait links) |
 | `results/disease_overlap/AP1/disease_overlap_report.txt` | Disease overlap summary |
+| `results/purifying_selection/AP1/constraint_by_hamming.tsv` | Coverage-validated constraint |
+| `results/purifying_selection/AP1/purifying_selection_summary.txt` | Selection analysis summary |
 
 ### Figures
 | File | Description |
@@ -118,6 +127,7 @@ Validate variants against ClinVar and GWAS Catalog disease databases.
 | `figures/landscape/AP1_high_priority_candidates.png` | High-priority candidate details |
 | `results/disease_overlap/AP1/figures/gwas_trait_distribution.png` | GWAS trait categories |
 | `results/disease_overlap/AP1/figures/overlap_summary.png` | Disease database overlap |
+| `figures/purifying_selection/AP1_constraint_evidence.png` | Constraint gradient visualization |
 
 ---
 
@@ -223,8 +233,8 @@ LAYER Laboratory, University of Colorado Boulder
 
 ## Status
 
-**Current:** Module 06 Complete (Disease Overlap Analysis)  
-**Last Updated:** December 1, 2025
+**Current:** Module 07 Complete (Purifying Selection Analysis)  
+**Last Updated:** December 2, 2025
 
 ### Completed Modules
 - ✅ Module 00: Data Fetching
@@ -234,6 +244,7 @@ LAYER Laboratory, University of Colorado Boulder
 - ✅ Module 04: AlphaGenome Scoring
 - ✅ Module 05: Activation Landscape
 - ✅ Module 06: Disease Overlap Analysis
+- ✅ Module 07: Purifying Selection Analysis
 
 ### Key Achievements
 - 7,037 dormant AP1 site activating variants identified
@@ -242,7 +253,9 @@ LAYER Laboratory, University of Colorado Boulder
 - **20.8% of variants near GWAS disease loci** (1,463 variants)
 - **0% ClinVar overlap** (expected - novel ultra-rare non-coding variants)
 - 7 exact position matches with GWAS lead SNPs
-- Full scientific report: `05_compute_activation_landscape/SCIENTIFIC_REPORT.md`
+- **76.5× depletion** of single-mutation AP1 activators (p = 4.2×10⁻³²)
+- **~30,000 "forbidden variants"** — positions absent from 807K humans despite high coverage
+- Full scientific reports in each module directory
 
 ### Disease Overlap Interpretation
 The lack of ClinVar overlap is **expected and positive**:

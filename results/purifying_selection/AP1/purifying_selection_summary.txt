@@ -1,0 +1,18 @@
+======================================================================
+PURIFYING SELECTION ANALYSIS: AP1 DORMANT SITE ACTIVATION
+======================================================================
+
+KEY FINDING:
+----------------------------------------
+Of 31,174 possible single-nucleotide mutations
+that would create functional AP1 binding sites:
+
+  * 29,957 are at high-confidence positions (AN >= 100K)
+  * Only 1 variant(s) observed in 807K individuals
+  * Expected under neutrality: 76.5
+  * Fold depletion: 76.5x
+  * Binomial p-value: 4.20e-32
+
+-> STRONG EVIDENCE of purifying selection against AP1 site creation
+
+======================================================================
