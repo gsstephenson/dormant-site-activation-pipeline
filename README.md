@@ -119,6 +119,15 @@ Publication-quality figures summarizing the pipeline findings.
 - 6 multi-panel figures generated (PNG + PDF)
 - Key visualizations: selection gradient, forbidden variant characterization, TF-tissue heatmap
 
+### Module 10: GWAS & ClinVar Validation ✅
+Orthogonal validation of forbidden variants against disease databases.
+- Output: `results/gwas_clinvar/AP1/`, `figures/gwas_clinvar/`
+- Scientific Report: `10_gwas_clinvar_validation/SCIENTIFIC_REPORT.md`
+- **Key finding: 1.06x enrichment near GWAS loci (p = 0.001)**
+- 95.8% of forbidden variants within 100kb of a GWAS hit
+- Neurological and cancer traits show highest enrichment
+- 4 exact GWAS position overlaps (potential ultra-rare causal variants)
+
 ---
 
 ## Key Outputs
@@ -136,6 +145,9 @@ Publication-quality figures summarizing the pipeline findings.
 | `results/forbidden_variants/AP1/forbidden_variants.tsv` | 29,957 forbidden variants |
 | `results/forbidden_variants/AP1/predictions_summary_ap1.tsv` | AP1-specific scores for forbidden variants |
 | `results/forbidden_variants/AP1/top_candidates.tsv` | Top 1000 forbidden variants by impact |
+| `results/gwas_clinvar/AP1/validation_report.txt` | GWAS/ClinVar validation summary |
+| `results/gwas_clinvar/AP1/proximity_enrichment.tsv` | Proximity analysis by window size |
+| `results/gwas_clinvar/AP1/trait_enrichment.tsv` | Enrichment by disease category |
 
 ### Figures
 | File | Description |
@@ -152,6 +164,10 @@ Publication-quality figures summarizing the pipeline findings.
 | `figures/forbidden_variants/genomic_distribution.png` | Chromosomal distribution |
 | `figures/forbidden_variants/selection_signal_strength.png` | Selection signal evidence |
 | `figures/forbidden_variants/functional_context.png` | Functional chromatin context |
+| `figures/gwas_clinvar/validation_summary.png` | GWAS/ClinVar validation (4-panel) |
+| `figures/gwas_clinvar/proximity_enrichment.png` | Proximity to GWAS loci by window |
+| `figures/gwas_clinvar/trait_enrichment.png` | Enrichment by disease category |
+| `figures/gwas_clinvar/exact_overlaps.png` | Exact position overlaps |
 
 ---
 
@@ -257,7 +273,7 @@ LAYER Laboratory, University of Colorado Boulder
 
 ## Status
 
-**Current:** Module 09 Complete (Visualization Suite)  
+**Current:** Module 10 Complete (GWAS & ClinVar Validation)  
 **Last Updated:** December 3, 2025
 
 ### Completed Modules
@@ -271,9 +287,7 @@ LAYER Laboratory, University of Colorado Boulder
 - ✅ Module 07: Purifying Selection Analysis
 - ✅ Module 08: Forbidden Variants Scoring
 - ✅ Module 09: Visualization Suite
-
-### Next: Module 10 — GWAS/ClinVar Validation
-Orthogonal validation using disease-associated variants.
+- ✅ Module 10: GWAS & ClinVar Validation
 
 ### Key Achievements
 - 7,037 dormant AP1 site activating variants identified
@@ -285,7 +299,9 @@ Orthogonal validation using disease-associated variants.
 - **76.5× depletion** of single-mutation AP1 activators (p = 4.2×10⁻³²)
 - **29,957 "forbidden variants"** — positions absent from 807K humans despite high coverage
 - **804.5M AlphaGenome predictions** for forbidden variants
-- **6 publication-quality figures** generated
+- **1.06x enrichment of forbidden variants near GWAS loci (p = 0.001)**
+- **95.8% of forbidden variants within 100kb of disease-associated loci**
+- **10 publication-quality figures** generated across all modules
 - Full scientific reports in each module directory
 
 ### Disease Overlap Interpretation

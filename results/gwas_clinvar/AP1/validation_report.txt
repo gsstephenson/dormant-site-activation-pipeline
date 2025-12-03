@@ -1,0 +1,56 @@
+================================================================================
+FORBIDDEN VARIANTS: GWAS & ClinVar Validation Report
+================================================================================
+
+PROXIMITY ENRICHMENT (Forbidden variants near GWAS loci)
+------------------------------------------------------------
+
+window_50kb:
+  Forbidden near GWAS: 26,892 / 29,957
+  Percentage: 89.77%
+
+window_100kb:
+  Forbidden near GWAS: 28,702 / 29,957
+  Percentage: 95.81%
+  Enrichment ratio: 1.06x
+  P-value (enriched): 0.0010
+  P-value (depleted): 1.0000
+
+window_500kb:
+  Forbidden near GWAS: 29,847 / 29,957
+  Percentage: 99.63%
+
+
+EXACT POSITION OVERLAPS
+------------------------------------------------------------
+
+GWAS_lead_SNPs:
+  Overlaps: 4
+  Percentage: 0.0134%
+
+ClinVar_all:
+  Overlaps: 34
+  Percentage: 0.1135%
+
+ClinVar_pathogenic:
+  Overlaps: 1
+  Percentage: 0.0033%
+
+ClinVar_pathogenic_SNVs:
+  Overlaps: 2
+  Percentage: 0.0067%
+
+
+TRAIT CATEGORY ENRICHMENT (100kb window)
+------------------------------------------------------------
+  neurological: 7,498 forbidden near 14,182 loci
+  hematological: 8,437 forbidden near 45,045 loci
+  other: 28,271 forbidden near 459,114 loci
+  anthropometric: 17,552 forbidden near 62,523 loci
+  metabolic: 11,560 forbidden near 103,757 loci
+  cancer: 4,815 forbidden near 11,562 loci
+  cardiovascular: 7,444 forbidden near 24,710 loci
+  immune: 4,230 forbidden near 13,756 loci
+
+================================================================================
+Analysis complete.

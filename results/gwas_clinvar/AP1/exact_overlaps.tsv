@@ -1,0 +1,5 @@
+target	n_forbidden_overlap	pct_forbidden_overlap	total_forbidden	total_target
+GWAS_lead_SNPs	4	0.01335247187635611	29957	300635
+ClinVar_all	34	0.11349601094902693	29957	4127008
+ClinVar_pathogenic	1	0.0033381179690890276	29957	176540
+ClinVar_pathogenic_SNVs	2	0.006676235938178055	29957	177049

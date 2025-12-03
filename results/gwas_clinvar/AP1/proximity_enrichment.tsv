@@ -1,0 +1,4 @@
+window	window_size	n_forbidden_near_gwas	pct_forbidden_near_gwas	total_forbidden
+window_50kb	50000	26892	89.76866842474213	29957
+window_100kb	100000	28702	95.81066194879327	29957
+window_500kb	500000	29847	99.6328070234002	29957
